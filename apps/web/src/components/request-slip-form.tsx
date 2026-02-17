@@ -1,54 +1,36 @@
 "use client";
 
 import { useState } from "react";
-
-interface Provider {
-  name: string;
-  description: string;
-  tags: string[];
-}
+import { trpc } from "@/lib/trpc";
 
 export function RequestSlipForm() {
   const [target, setTarget] = useState("github");
   const [principal, setPrincipal] = useState("kaarch@gmail.com");
   const [scopes, setScopes] = useState("repos:read");
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
-  const providers: Provider[] = [
-    { name: "github", description: "GitHub - Git hosting and code collaboration", tags: ["git", "hosting", "code"] },
-    { name: "supabase", description: "Supabase - Open source Firebase alternative", tags: ["database", "auth", "storage"] },
-  ];
+  const requestSlip = trpc.slip.request.useMutation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setResult(null);
-
-    try {
-      const res = await fetch("http://localhost:3001/trpc/slip.request", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          target,
-          principal,
-          requested_scope: scopes.split(",").map((s) => s.trim()),
-        }),
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        setResult({ type: "success", message: `Slip created: ${data.result.slip.id}` });
-      } else {
-        setResult({ type: "error", message: data.error?.message || "Failed to create slip" });
+    requestSlip.mutate(
+      {
+        target,
+        principal,
+        requested_scope: scopes.split(",").map((s) => s.trim()),
+      },
+      {
+        onSuccess: () => {
+          // Invalidate list query to refresh
+          window.location.reload();
+        },
       }
-    } catch (err) {
-      setResult({ type: "error", message: "API unavailable. Make sure the API server is running." });
-    } finally {
-      setLoading(false);
-    }
+    );
   };
+
+  const providers = [
+    { name: "github", description: "GitHub - Git hosting and code collaboration" },
+    { name: "supabase", description: "Supabase - Open source Firebase alternative" },
+  ];
 
   return (
     <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-6">
@@ -106,21 +88,21 @@ export function RequestSlipForm() {
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={requestSlip.isPending}
           className="w-full rounded-md bg-white px-4 py-2 text-sm font-medium text-black hover:bg-zinc-200 disabled:opacity-50"
         >
-          {loading ? "Requesting..." : "Request Slip"}
+          {requestSlip.isPending ? "Requesting..." : "Request Slip"}
         </button>
 
-        {result && (
-          <div
-            className={`rounded-md p-3 text-sm ${
-              result.type === "success"
-                ? "bg-green-900/50 text-green-200"
-                : "bg-red-900/50 text-red-200"
-            }`}
-          >
-            {result.message}
+        {requestSlip.error && (
+          <div className="rounded-md bg-red-900/50 p-3 text-sm text-red-200">
+            {requestSlip.error.message}
+          </div>
+        )}
+
+        {requestSlip.isSuccess && (
+          <div className="rounded-md bg-green-900/50 p-3 text-sm text-green-200">
+            Slip created: {requestSlip.data.slip.id}
           </div>
         )}
       </form>

@@ -14,7 +14,7 @@
     "@obo/core": "workspace:*",
     "@obo/db": "workspace:*",
     "@obo/providers": "workspace:*",
-    "@trpc/server": "^11.0.0",
+    "@trpc/server": "^11.10.0",
     "hono": "^4.6.16",
     "zod": "^3.24.1"
   },

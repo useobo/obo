@@ -2,13 +2,13 @@
  * OBO API Server
  *
  * Hono + tRPC backend for the OBO dashboard.
- * Handles slip management, policy evaluation, and provider coordination.
  */
 
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
+import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { initTRPC } from "@trpc/server";
 import { z } from "zod";
 import { createSlipService } from "@obo/core/dist/slip/index.js";
@@ -26,6 +26,18 @@ slipService.registerProvider(GitHubProvider);
 slipService.registerProvider(SupabaseProvider);
 
 // ---------------------------------------------------------------------
+// Context
+// ---------------------------------------------------------------------
+
+interface Context {
+  // Add things like user session later
+}
+
+const createContext = async (): Promise<Context> => {
+  return {};
+};
+
+// ---------------------------------------------------------------------
 // Routers
 // ---------------------------------------------------------------------
 
@@ -39,7 +51,7 @@ const slipRouter = t.router({
       reason: z.string().optional(),
     }))
     .mutation(async ({ input }) => {
-      return slipService.requestSlip({
+      const result = await slipService.requestSlip({
         actor: "api",
         principal: input.principal,
         target: input.target,
@@ -47,6 +59,7 @@ const slipRouter = t.router({
         ttl: input.ttl,
         reason: input.reason,
       });
+      return result;
     }),
 
   list: t.procedure
@@ -119,8 +132,27 @@ app.use("*", cors({
 // Health check
 app.get("/health", (c) => c.json({ status: "ok", timestamp: Date.now() }));
 
-// tRPC handler (placeholder - we'll wire this up properly when we add the web app)
-app.get("/trpc", (c) => c.json({ message: "tRPC endpoint coming soon" }));
+// tRPC handler
+app.use("/trpc/*", async (c) => {
+  const req = c.req.raw;
+  const resHeaders = new Headers();
+
+  const response = await fetchRequestHandler({
+    endpoint: "/trpc",
+    req,
+    resHeaders,
+    router: appRouter,
+    createContext,
+  });
+
+  // Set response headers
+  response.headers.forEach((value, key) => {
+    c.header(key, value);
+  });
+
+  // Return response body
+  return c.body(response.body, response.status);
+});
 
 // API info
 app.get("/", (c) => c.json({
