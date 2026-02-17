@@ -33,19 +33,19 @@ export function RequestSlipForm() {
   ];
 
   return (
-    <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-6">
-      <h2 className="mb-4 text-lg font-semibold">Request a Slip</h2>
+    <div className="rounded-2xl border border-border-default bg-surface-50 p-6 shadow-[0_10px_30px_rgba(46,42,38,0.06)]">
+      <h2 className="mb-4 text-lg font-semibold text-text-primary">Request a Slip</h2>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="target" className="mb-1 block text-sm text-zinc-400">
+          <label htmlFor="target" className="mb-1 block text-sm text-text-secondary">
             Target
           </label>
           <select
             id="target"
             value={target}
             onChange={(e) => setTarget(e.target.value)}
-            className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm focus:border-zinc-600 focus:outline-none focus:ring-1 focus:ring-zinc-600"
+            className="w-full rounded-xl border border-border-default bg-surface-100 px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:border-border-focus focus:outline-none focus:ring-1 focus:ring-accent-500/40"
           >
             {providers.map((p) => (
               <option key={p.name} value={p.name}>
@@ -56,7 +56,7 @@ export function RequestSlipForm() {
         </div>
 
         <div>
-          <label htmlFor="principal" className="mb-1 block text-sm text-zinc-400">
+          <label htmlFor="principal" className="mb-1 block text-sm text-text-secondary">
             Principal
           </label>
           <input
@@ -65,12 +65,12 @@ export function RequestSlipForm() {
             value={principal}
             onChange={(e) => setPrincipal(e.target.value)}
             placeholder="you@example.com"
-            className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm focus:border-zinc-600 focus:outline-none focus:ring-1 focus:ring-zinc-600"
+            className="w-full rounded-xl border border-border-default bg-surface-100 px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:border-border-focus focus:outline-none focus:ring-1 focus:ring-accent-500/40"
           />
         </div>
 
         <div>
-          <label htmlFor="scopes" className="mb-1 block text-sm text-zinc-400">
+          <label htmlFor="scopes" className="mb-1 block text-sm text-text-secondary">
             Scopes (comma-separated)
           </label>
           <input
@@ -79,9 +79,9 @@ export function RequestSlipForm() {
             value={scopes}
             onChange={(e) => setScopes(e.target.value)}
             placeholder="repos:read, user:email"
-            className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm focus:border-zinc-600 focus:outline-none focus:ring-1 focus:ring-zinc-600"
+            className="w-full rounded-xl border border-border-default bg-surface-100 px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:border-border-focus focus:outline-none focus:ring-1 focus:ring-accent-500/40"
           />
-          <p className="mt-1 text-xs text-zinc-500">
+          <p className="mt-1 text-xs text-text-tertiary">
             GitHub: repos:read, repos:write, user:read, user:email
           </p>
         </div>
@@ -89,19 +89,19 @@ export function RequestSlipForm() {
         <button
           type="submit"
           disabled={requestSlip.isPending}
-          className="w-full rounded-md bg-white px-4 py-2 text-sm font-medium text-black hover:bg-zinc-200 disabled:opacity-50"
+          className="inline-flex w-full items-center justify-center rounded-xl bg-accent-500 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(122,116,104,0.28)] transition-all hover:-translate-y-0.5 hover:bg-accent-600 focus:outline-none focus:ring-2 focus:ring-accent-500/40 disabled:opacity-50"
         >
           {requestSlip.isPending ? "Requesting..." : "Request Slip"}
         </button>
 
         {requestSlip.error && (
-          <div className="rounded-md bg-red-900/50 p-3 text-sm text-red-200">
+          <div className="rounded-md bg-status-error-bg border border-status-error-border p-3 text-sm text-status-error-text">
             {requestSlip.error.message}
           </div>
         )}
 
         {requestSlip.isSuccess && (
-          <div className="rounded-md bg-green-900/50 p-3 text-sm text-green-200">
+          <div className="rounded-md bg-status-success-bg border border-status-success-border p-3 text-sm text-status-success-text">
             Slip created: {requestSlip.data.slip.id}
           </div>
         )}
