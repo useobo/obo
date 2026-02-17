@@ -6,8 +6,10 @@
     ".": "./dist/index.js",
     "./github": "./dist/github/index.js",
     "./supabase": "./dist/supabase/index.js",
+    "./obo": "./dist/obo/index.js",
     "./dist/github/index.js": "./dist/github/index.js",
-    "./dist/supabase/index.js": "./dist/supabase/index.js"
+    "./dist/supabase/index.js": "./dist/supabase/index.js",
+    "./dist/obo/index.js": "./dist/obo/index.js"
   },
   "scripts": {
     "build": "tsc",

@@ -9,36 +9,48 @@ import { eq, desc, and, type SQL } from "drizzle-orm";
 import { createSlipService } from "@obo/core/dist/slip/index.js";
 import { GitHubProvider } from "@obo/providers/dist/github/index.js";
 import { SupabaseProvider } from "@obo/providers/dist/supabase/index.js";
-import { getDb, schema } from "@obo/db";
+import { OboProvider } from "@obo/providers/dist/obo/index.js";
+import { getDb, schema, genId } from "@obo/db";
 
 const db = getDb();
 
 async function initializeDefaultData() {
   const existingTargets = await db.select().from(schema.targets);
-  
+
   if (existingTargets.length === 0) {
     await db.insert(schema.targets).values({
+      id: genId(),
       name: "github",
       description: "GitHub - Git hosting and code collaboration",
       tags: ["git", "hosting", "code", "repos"],
       supports: { oauth: true, genesis: true, byoc: true, rogue: false },
     }).onConflictDoNothing();
-    
+
     await db.insert(schema.targets).values({
+      id: genId(),
       name: "supabase",
       description: "Supabase - Open source Firebase alternative",
       tags: ["database", "auth", "storage"],
       supports: { oauth: false, genesis: false, byoc: true, rogue: true },
     }).onConflictDoNothing();
 
+    await db.insert(schema.targets).values({
+      id: genId(),
+      name: "obo",
+      description: "obo - Self-referential access management",
+      tags: ["internal", "self-hosted", "api"],
+      supports: { oauth: false, genesis: true, byoc: true, rogue: false },
+    }).onConflictDoNothing();
+
     console.log("Initialized default targets");
   }
 
   const existingPolicies = await db.select().from(schema.policies);
-  
+
   if (existingPolicies.length === 0) {
     await db.insert(schema.policies).values([
       {
+        id: genId(),
         name: "GitHub Default",
         description: "Default policy for GitHub access",
         principals: ["*"],
@@ -50,6 +62,7 @@ async function initializeDefaultData() {
         maxTtl: 86400,
       },
       {
+        id: genId(),
         name: "Supabase Default",
         description: "Default policy for Supabase access",
         principals: ["*"],
@@ -57,6 +70,18 @@ async function initializeDefaultData() {
         targets: ["supabase"],
         autoApprove: ["projects:read", "database:read", "functions:read"],
         manualApprove: ["projects:write", "database:write", "functions:write"],
+        deny: [],
+        maxTtl: 3600,
+      },
+      {
+        id: genId(),
+        name: "OBO Default",
+        description: "Default policy for OBO self-referential access",
+        principals: ["*"],
+        actors: ["*"],
+        targets: ["obo"],
+        autoApprove: ["slips:list", "slips:create", "slips:revoke", "policies:read", "dashboard:read"],
+        manualApprove: ["policies:write"],
         deny: [],
         maxTtl: 3600,
       },
@@ -68,6 +93,7 @@ async function initializeDefaultData() {
   const existingActors = await db.select().from(schema.actors);
   if (existingActors.length === 0) {
     await db.insert(schema.actors).values({
+      id: genId(),
       name: "API",
       type: "service",
     }).onConflictDoNothing();
@@ -80,6 +106,7 @@ const t = initTRPC.create();
 const slipService = createSlipService();
 slipService.registerProvider(GitHubProvider);
 slipService.registerProvider(SupabaseProvider);
+slipService.registerProvider(OboProvider);
 
 interface Context {
   db: typeof db;
@@ -107,6 +134,7 @@ const slipRouter = t.router({
 
       if (!principalId) {
         const [newPrincipal] = await ctx.db.insert(schema.principals).values({
+          id: genId(),
           email: input.principal,
         }).returning();
         principalId = newPrincipal.id;
@@ -126,6 +154,7 @@ const slipRouter = t.router({
 
       if (!actor[0]) {
         const [newActor] = await ctx.db.insert(schema.actors).values({
+          id: genId(),
           name: "API",
           type: "service",
         }).returning();
@@ -166,6 +195,16 @@ const slipRouter = t.router({
           metadata: result.token.metadata || {},
           expiresAt: result.slip.expires_at,
         });
+
+        // Update the slip with the token ID
+        const [updatedSlip] = await ctx.db.update(schema.slips)
+          .set({ tokenId: result.token.id })
+          .where(eq(schema.slips.id, slip.id))
+          .returning();
+
+        if (updatedSlip) {
+          Object.assign(slip, updatedSlip);
+        }
       }
 
       // Store OAuth device code info if present
@@ -237,6 +276,7 @@ After authorizing, call complete_oauth_flow with slip ID: ${slip.id}`;
       }
 
       await ctx.db.insert(schema.auditLog).values({
+        id: genId(),
         action: "slip_created",
         actorId: actor[0].id,
         principalId,
@@ -386,6 +426,7 @@ After authorizing, call complete_oauth_flow with slip ID: ${slip.id}`;
 
           // Log the completion
           await ctx.db.insert(schema.auditLog).values({
+            id: genId(),
             action: "oauth_completed",
             slipId: input.slipId,
             details: { tokenId },
@@ -396,6 +437,7 @@ After authorizing, call complete_oauth_flow with slip ID: ${slip.id}`;
             token: {
               id: tokenId,
               type: "oauth_access_token",
+              secret: data.access_token, // Return the actual token secret so agent can use it
               reference: data.access_token.substring(0, 20) + "...",
               scopes: data.scope?.split(",") || [],
             },
@@ -425,7 +467,7 @@ After authorizing, call complete_oauth_flow with slip ID: ${slip.id}`;
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input, ctx }) => {
       const now = new Date();
-      
+
       await ctx.db.update(schema.slips)
         .set({
           status: "revoked",
@@ -438,6 +480,64 @@ After authorizing, call complete_oauth_flow with slip ID: ${slip.id}`;
         .where(eq(schema.tokens.slipId, input.id));
 
       return { success: true };
+    }),
+
+  getToken: t.procedure
+    .input(z.object({ slipId: z.string() }))
+    .query(async ({ input, ctx }) => {
+      const [slip] = await ctx.db.select({
+        tokenId: schema.slips.tokenId,
+        status: schema.slips.status,
+        expiresAt: schema.slips.expiresAt,
+      })
+      .from(schema.slips)
+      .where(eq(schema.slips.id, input.slipId))
+      .limit(1);
+
+      if (!slip) {
+        throw new Error("Slip not found");
+      }
+
+      if (slip.status !== "active") {
+        throw new Error(`Slip is not active (status: ${slip.status})`);
+      }
+
+      if (slip.expiresAt && new Date() > slip.expiresAt) {
+        throw new Error("Slip has expired");
+      }
+
+      if (!slip.tokenId) {
+        return {
+          hasToken: false,
+          message: "No token yet. Complete the OAuth flow first.",
+        };
+      }
+
+      const [token] = await ctx.db.select({
+        id: schema.tokens.id,
+        type: schema.tokens.type,
+        secret: schema.tokens.secret,
+        reference: schema.tokens.reference,
+        metadata: schema.tokens.metadata,
+      })
+      .from(schema.tokens)
+      .where(eq(schema.tokens.id, slip.tokenId))
+      .limit(1);
+
+      if (!token) {
+        throw new Error("Token not found in database");
+      }
+
+      return {
+        hasToken: true,
+        token: {
+          id: token.id,
+          type: token.type,
+          secret: token.secret, // In production, you might want to handle this more carefully
+          reference: token.reference,
+          metadata: token.metadata,
+        },
+      };
     }),
 });
 

@@ -21,3 +21,15 @@ export function getDb() {
 }
 
 export { schema };
+
+/**
+ * Generate a unique ID using UUID or timestamp fallback
+ */
+export function genId(): string {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  const timestamp = Date.now();
+  const random = Math.random().toString(36).slice(2, 11);
+  return `${timestamp}_${random}`;
+}

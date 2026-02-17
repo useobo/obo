@@ -10,7 +10,7 @@ import { pgTable, text, integer, timestamp, boolean, jsonb } from "drizzle-orm/p
  * Principals — the authority owners (users agents act on behalf of)
  */
 export const principals = pgTable("principals", {
-  id: text("id").primaryKey().default(genId()),
+  id: text("id").primaryKey(),
   email: text("email").notNull().unique(),
   displayName: text("display_name"),
   metadata: jsonb("metadata").$type<Record<string, unknown>>(),
@@ -21,7 +21,7 @@ export const principals = pgTable("principals", {
  * Actors — the agents that make requests (could be AI agents, workers, or dashboard users)
  */
 export const actors = pgTable("actors", {
-  id: text("id").primaryKey().default(genId()),
+  id: text("id").primaryKey(),
   name: text("name").notNull(),
   type: text("type").notNull(), // 'agent', 'worker', 'user', 'service'
   metadata: jsonb("metadata").$type<Record<string, unknown>>(),
@@ -32,7 +32,7 @@ export const actors = pgTable("actors", {
  * Targets — the services being accessed (GitHub, Supabase, etc.)
  */
 export const targets = pgTable("targets", {
-  id: text("id").primaryKey().default(genId()),
+  id: text("id").primaryKey(),
   name: text("name").notNull().unique(),
   description: text("description"),
   tags: jsonb("tags").$type<string[]>(),
@@ -49,7 +49,7 @@ export const targets = pgTable("targets", {
  * Policies — the rules governing slip requests
  */
 export const policies = pgTable("policies", {
-  id: text("id").primaryKey().default(genId()),
+  id: text("id").primaryKey(),
   name: text("name").notNull(),
   description: text("description"),
   principals: jsonb("principals").$type<string[]>(), // Glob patterns
@@ -67,7 +67,7 @@ export const policies = pgTable("policies", {
  * Slips — the authorization records
  */
 export const slips = pgTable("slips", {
-  id: text("id").primaryKey().default(genId()),
+  id: text("id").primaryKey(),
   actorId: text("actor_id").notNull().references(() => actors.id),
   principalId: text("principal_id").notNull().references(() => principals.id),
   targetId: text("target_id").notNull().references(() => targets.id),
@@ -95,7 +95,7 @@ export const slips = pgTable("slips", {
  * Tokens — the actual credentials
  */
 export const tokens = pgTable("tokens", {
-  id: text("id").primaryKey().default(genId()),
+  id: text("id").primaryKey(),
   slipId: text("slip_id").notNull().references(() => slips.id),
   type: text("type").notNull(), // 'bearer_token', 'api_key', 'oauth_client', 'jwt'
   secret: text("secret"), // TODO: Encrypt this
@@ -110,7 +110,7 @@ export const tokens = pgTable("tokens", {
  * Audit log — all actions for compliance
  */
 export const auditLog = pgTable("audit_log", {
-  id: text("id").primaryKey().default(genId()),
+  id: text("id").primaryKey(),
   timestamp: timestamp("timestamp").defaultNow().notNull(),
   action: text("action").notNull(), // 'slip_requested', 'slip_granted', 'slip_revoked', etc.
   actorId: text("actor_id").references(() => actors.id),
@@ -126,7 +126,7 @@ export const auditLog = pgTable("audit_log", {
  * BYOC credentials — user-provided credentials
  */
 export const byocCredentials = pgTable("byoc_credentials", {
-  id: text("id").primaryKey().default(genId()),
+  id: text("id").primaryKey(),
   principalId: text("principal_id").notNull().references(() => principals.id),
   targetId: text("target_id").notNull().references(() => targets.id),
   credential: text("credential").notNull(), // TODO: Encrypt this
@@ -149,17 +149,6 @@ export const pendingOAuthFlows = pgTable("pending_oauth_flows", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   expiresAt: timestamp("expires_at").notNull(),
 });
-
-// Helper function to generate IDs
-function genId(): string {
-  // Use crypto.randomUUID for better uniqueness, fallback to timestamp + random
-  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-    return crypto.randomUUID();
-  }
-  const timestamp = Date.now();
-  const random = Math.random().toString(36).slice(2, 11);
-  return `${timestamp}_${random}`;
-}
 
 // Types for inserts
 export type NewPrincipal = typeof principals.$inferInsert;

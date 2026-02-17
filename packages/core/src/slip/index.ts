@@ -42,6 +42,16 @@ const defaultPolicies: Policy[] = [
     deny: [],
     max_ttl: 3600,
   },
+  {
+    id: "obo-default",
+    principals: ["*"],
+    actors: ["*"],
+    targets: ["obo"],
+    auto_approve: ["slips:list", "slips:create", "slips:revoke", "policies:read", "dashboard:read"],
+    manual_approve: ["policies:write"],
+    deny: [],
+    max_ttl: 3600,
+  },
 ];
 
 export class SlipService {
