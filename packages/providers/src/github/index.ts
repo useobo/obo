@@ -154,6 +154,15 @@ export const GitHubProvider: Provider = {
           reason: "OAuth device flow initiated",
         },
       },
+      // Return device code info for the caller to store
+      deviceCodeInfo: {
+        deviceCode: deviceCodeResponse.device_code,
+        userCode: deviceCodeResponse.user_code,
+        verificationUri: deviceCodeResponse.verification_uri,
+        expiresIn: deviceCodeResponse.expires_in,
+        interval: deviceCodeResponse.interval,
+        expiresInAt: Date.now() + deviceCodeResponse.expires_in * 1000,
+      },
       instructions: `
 GitHub OAuth Device Flow:
 

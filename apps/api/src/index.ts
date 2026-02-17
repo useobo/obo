@@ -168,6 +168,74 @@ const slipRouter = t.router({
         });
       }
 
+      // Store OAuth device code info if present
+      // For GitHub OAuth flow, request and store the device code directly
+      if (result.slip.provisioning_method === "oauth" && target[0].name === "github") {
+        const clientId = process.env.GITHUB_CLIENT_ID;
+        if (!clientId) {
+          throw new Error("GITHUB_CLIENT_ID not configured");
+        }
+
+        // Map OBO scopes to GitHub scopes
+        const scopeMap: Record<string, string> = {
+          "repos:read": "repo",
+          "repos:write": "repo",
+          "user:read": "read:user",
+          "user:email": "user:email",
+        };
+        const githubScopes = [...new Set(input.requested_scope.map(s => scopeMap[s] || s))];
+
+        // Request device code from GitHub
+        const deviceCodeResponse = await fetch("https://github.com/login/device/code", {
+          method: "POST",
+          headers: { Accept: "application/json" },
+          body: new URLSearchParams({
+            client_id: clientId,
+            scope: githubScopes.join(" "),
+          }),
+        }).then(r => r.json());
+
+        if (deviceCodeResponse.error) {
+          throw new Error(`GitHub device code error: ${deviceCodeResponse.error}`);
+        }
+
+        // Store device code info for completion
+        await ctx.db.insert(schema.pendingOAuthFlows).values({
+          slipId: slip.id,
+          deviceCode: deviceCodeResponse.device_code,
+          userCode: deviceCodeResponse.user_code,
+          verificationUri: deviceCodeResponse.verification_uri,
+          expiresIn: deviceCodeResponse.expires_in,
+          interval: deviceCodeResponse.interval || 5,
+          expiresAt: new Date(Date.now() + deviceCodeResponse.expires_in * 1000),
+        });
+
+        // Update instructions with the actual device code
+        (result as any).instructions = `GitHub OAuth Device Flow:
+
+1. Visit: ${deviceCodeResponse.verification_uri}
+2. Enter code: ${deviceCodeResponse.user_code}
+3. Authorize access for ${input.principal}
+
+Requested scopes: ${githubScopes.join(", ")}
+
+After authorizing, call complete_oauth_flow with slip ID: ${slip.id}`;
+      }
+
+      // For providers that do return deviceCodeInfo (future)
+      if ((result as any).deviceCodeInfo) {
+        const dc = (result as any).deviceCodeInfo;
+        await ctx.db.insert(schema.pendingOAuthFlows).values({
+          slipId: slip.id,
+          deviceCode: dc.deviceCode,
+          userCode: dc.userCode,
+          verificationUri: dc.verificationUri,
+          expiresIn: dc.expiresIn,
+          interval: dc.interval,
+          expiresAt: new Date(dc.expiresInAt),
+        }).onConflictDoNothing();
+      }
+
       await ctx.db.insert(schema.auditLog).values({
         action: "slip_created",
         actorId: actor[0].id,
@@ -183,6 +251,8 @@ const slipRouter = t.router({
         principal: input.principal,
         policy_result: result.slip.policy_result,
         granted_scope: result.slip.granted_scope,
+        // Pass through provider instructions (e.g., OAuth device flow)
+        instructions: (result as any).instructions || null,
       };
     }),
 
@@ -225,6 +295,130 @@ const slipRouter = t.router({
         target: r.target,
         principal: r.principal,
       }));
+    }),
+
+  completeOAuth: t.procedure
+    .input(z.object({
+      slipId: z.string(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const [pendingFlow] = await ctx.db.select().from(schema.pendingOAuthFlows)
+        .where(eq(schema.pendingOAuthFlows.slipId, input.slipId));
+
+      if (!pendingFlow) {
+        throw new Error("No pending OAuth flow found for this slip. It may have expired or already been completed.");
+      }
+
+      // Check if expired
+      if (new Date() > pendingFlow.expiresAt) {
+        await ctx.db.delete(schema.pendingOAuthFlows).where(eq(schema.pendingOAuthFlows.slipId, input.slipId));
+        throw new Error("OAuth flow has expired. Please request a new slip.");
+      }
+
+      // Get the slip for expiresAt
+      const [slip] = await ctx.db.select().from(schema.slips)
+        .where(eq(schema.slips.id, input.slipId))
+        .limit(1);
+
+      if (!slip) {
+        throw new Error("Slip not found");
+      }
+
+      const clientId = process.env.GITHUB_CLIENT_ID;
+      const clientSecret = process.env.GITHUB_CLIENT_SECRET;
+
+      if (!clientId || !clientSecret) {
+        throw new Error("GitHub OAuth not configured");
+      }
+
+      // Poll GitHub for the access token
+      const maxAttempts = 30; // 30 attempts
+      const interval = pendingFlow.interval || 5;
+
+      for (let i = 0; i < maxAttempts; i++) {
+        await new Promise(resolve => setTimeout(resolve, interval * 1000));
+
+        const params = new URLSearchParams({
+          client_id: clientId,
+          device_code: pendingFlow.deviceCode,
+          grant_type: "urn:ietf:params:oauth:grant-type:device_code",
+        });
+
+        const response = await fetch("https://github.com/login/oauth/access_token", {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+          },
+          body: params,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Token request failed: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.access_token) {
+          // Success! Store the token and clean up
+          const tokenId = `gh_token_${Date.now()}`;
+
+          await ctx.db.insert(schema.tokens).values({
+            id: tokenId,
+            slipId: input.slipId,
+            type: "oauth_access_token",
+            secret: data.access_token,
+            reference: data.access_token.substring(0, 20) + "...",
+            metadata: {
+              token_type: data.token_type,
+              scope: data.scope,
+            },
+            expiresAt: slip.expiresAt,
+          });
+
+          // Update slip with token reference
+          await ctx.db.update(schema.slips)
+            .set({ tokenId })
+            .where(eq(schema.slips.id, input.slipId));
+
+          // Clean up pending flow
+          await ctx.db.delete(schema.pendingOAuthFlows)
+            .where(eq(schema.pendingOAuthFlows.slipId, input.slipId));
+
+          // Log the completion
+          await ctx.db.insert(schema.auditLog).values({
+            action: "oauth_completed",
+            slipId: input.slipId,
+            details: { tokenId },
+          });
+
+          return {
+            success: true,
+            token: {
+              id: tokenId,
+              type: "oauth_access_token",
+              reference: data.access_token.substring(0, 20) + "...",
+              scopes: data.scope?.split(",") || [],
+            },
+          };
+        }
+
+        if (data.error === "authorization_pending") {
+          continue; // Keep polling
+        }
+
+        if (data.error === "slow_down") {
+          await new Promise(resolve => setTimeout(resolve, 5000));
+          continue;
+        }
+
+        // Any other error is fatal
+        await ctx.db.delete(schema.pendingOAuthFlows)
+          .where(eq(schema.pendingOAuthFlows.slipId, input.slipId));
+
+        throw new Error(`OAuth error: ${data.error}${data.error_description ? ` - ${data.error_description}` : ""}`);
+      }
+
+      throw new Error("Authorization timed out. Please try again.");
     }),
 
   revoke: t.procedure

@@ -136,9 +136,29 @@ export const byocCredentials = pgTable("byoc_credentials", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+/**
+ * Pending OAuth flows — store device codes for OAuth completion
+ */
+export const pendingOAuthFlows = pgTable("pending_oauth_flows", {
+  slipId: text("slip_id").primaryKey().references(() => slips.id),
+  deviceCode: text("device_code").notNull(),
+  userCode: text("user_code").notNull(),
+  verificationUri: text("verification_uri").notNull(),
+  expiresIn: integer("expires_in").notNull(),
+  interval: integer("interval").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+});
+
 // Helper function to generate IDs
 function genId(): string {
-  return `${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+  // Use crypto.randomUUID for better uniqueness, fallback to timestamp + random
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  const timestamp = Date.now();
+  const random = Math.random().toString(36).slice(2, 11);
+  return `${timestamp}_${random}`;
 }
 
 // Types for inserts
@@ -150,3 +170,4 @@ export type NewSlip = typeof slips.$inferInsert;
 export type NewToken = typeof tokens.$inferInsert;
 export type NewAuditLog = typeof auditLog.$inferInsert;
 export type NewByocCredential = typeof byocCredentials.$inferInsert;
+export type NewPendingOAuthFlow = typeof pendingOAuthFlows.$inferInsert;

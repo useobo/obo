@@ -173,6 +173,16 @@ export interface SlipResponse {
 
   /** Instructions for Actor */
   instructions?: string;
+
+  /** Device code info for OAuth completion (optional) */
+  deviceCodeInfo?: {
+    deviceCode: string;
+    userCode: string;
+    verificationUri: string;
+    expiresIn: number;
+    interval: number;
+    expiresInAt: number;
+  };
 }
 
 /**
