@@ -1,0 +1,24 @@
+{
+  "name": "@obo/policy",
+  "version": "0.0.1",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./evaluator": "./src/evaluator.ts",
+    "./parser": "./src/parser.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "@obo/core": "workspace:*",
+    "@obo/db": "workspace:*",
+    "minimatch": "^10.0.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

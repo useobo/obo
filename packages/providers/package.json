@@ -1,0 +1,24 @@
+{
+  "name": "@obo/providers",
+  "version": "0.0.1",
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.js",
+    "./github": "./dist/github/index.js",
+    "./supabase": "./dist/supabase/index.js",
+    "./dist/github/index.js": "./dist/github/index.js",
+    "./dist/supabase/index.js": "./dist/supabase/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@obo/core": "workspace:*",
+    "jose": "^5.9.6"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "typescript": "^5.7.2"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "name": "@obo/mcp-server",
+  "version": "0.0.1",
+  "type": "module",
+  "description": "MCP server for OBO — lets AI agents request slips",
+  "bin": {
+    "obo-mcp": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --out-dir dist --external @modelcontextprotocol/sdk --external zod",
+    "dev": "tsup src/index.ts --format esm --out-dir dist --external @modelcontextprotocol/sdk --external zod --watch",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "@obo/core": "workspace:*",
+    "@obo/providers": "workspace:*",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "typescript": "^5.7.2",
+    "tsup": "^8.3.5"
+  },
+  "tsup": {
+    "clean": true
+  }
+}
