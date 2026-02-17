@@ -36,11 +36,17 @@ importers:
         specifier: workspace:*
         version: link:../../packages/providers
       '@trpc/server':
-        specifier: ^11.10.0
+        specifier: ^11.0.0
         version: 11.10.0(typescript@5.9.3)
+      drizzle-orm:
+        specifier: ^0.38.4
+        version: 0.38.4(@types/react@19.2.14)(postgres@3.4.8)(react@19.2.4)
       hono:
         specifier: ^4.6.16
         version: 4.11.9
+      postgres:
+        specifier: ^3.4.5
+        version: 3.4.8
       zod:
         specifier: ^3.24.1
         version: 3.25.76
@@ -137,12 +143,9 @@ importers:
 
   packages/db:
     dependencies:
-      '@obo/core':
-        specifier: workspace:*
-        version: link:../core
       drizzle-orm:
         specifier: ^0.38.4
-        version: 0.38.4(@types/react@19.2.14)(react@19.2.4)
+        version: 0.38.4(@types/react@19.2.14)(postgres@3.4.8)(react@19.2.4)
     devDependencies:
       '@types/node':
         specifier: ^22.10.5
@@ -150,6 +153,9 @@ importers:
       drizzle-kit:
         specifier: ^0.30.4
         version: 0.30.6
+      postgres:
+        specifier: ^3.4.5
+        version: 3.4.8
       typescript:
         specifier: ^5.7.2
         version: 5.9.3
@@ -2830,6 +2836,10 @@ packages:
     resolution: {integrity: sha512-3Ybi1tAuwAP9s0r1UQ2J4n5Y0G05bJkpUIO0/bI9MhwmD70S5aTWbXGBwxHrelT+XM1k6dM0pk+SwNkpTRN7Pg==}
     engines: {node: ^10 || ^12 || >=14}
 
+  postgres@3.4.8:
+    resolution: {integrity: sha512-d+JFcLM17njZaOLkv6SCev7uoLaBtfK86vMUXhW1Z4glPWh4jozno9APvW/XKFJ3CCxVoC7OL38BqRydtu5nGg==}
+    engines: {node: '>=12'}
+
   prelude-ls@1.2.1:
     resolution: {integrity: sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==}
     engines: {node: '>= 0.8.0'}
@@ -4660,9 +4670,10 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.38.4(@types/react@19.2.14)(react@19.2.4):
+  drizzle-orm@0.38.4(@types/react@19.2.14)(postgres@3.4.8)(react@19.2.4):
     optionalDependencies:
       '@types/react': 19.2.14
+      postgres: 3.4.8
       react: 19.2.4
 
   dunder-proto@1.0.1:
@@ -5822,6 +5833,8 @@ snapshots:
       nanoid: 3.3.11
       picocolors: 1.1.1
       source-map-js: 1.2.1
+
+  postgres@3.4.8: {}
 
   prelude-ls@1.2.1: {}
 

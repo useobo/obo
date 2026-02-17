@@ -1,122 +1,123 @@
 /**
  * OBO Database Schema
  *
- * Stores slips, tokens, policies, and audit logs.
+ * PostgreSQL schema for storing slips, tokens, policies, and audit logs.
  */
 
-import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
+import { pgTable, text, integer, timestamp, boolean, jsonb } from "drizzle-orm/pg-core";
 
 /**
- * Principals — the authority owners
+ * Principals — the authority owners (users agents act on behalf of)
  */
-export const principals = sqliteTable("principals", {
-  id: text("id").primaryKey(),
+export const principals = pgTable("principals", {
+  id: text("id").primaryKey().default(genId()),
   email: text("email").notNull().unique(),
   displayName: text("display_name"),
-  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
-  metadata: text("metadata", { mode: "json" }).$type(),
+  metadata: jsonb("metadata").$type<Record<string, unknown>>(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 /**
- * Actors — the agents that make requests
+ * Actors — the agents that make requests (could be AI agents, workers, or dashboard users)
  */
-export const actors = sqliteTable("actors", {
-  id: text("id").primaryKey(),
+export const actors = pgTable("actors", {
+  id: text("id").primaryKey().default(genId()),
   name: text("name").notNull(),
-  type: text("type").notNull(), // 'agent', 'worker', 'service'
-  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
-  metadata: text("metadata", { mode: "json" }).$type(),
+  type: text("type").notNull(), // 'agent', 'worker', 'user', 'service'
+  metadata: jsonb("metadata").$type<Record<string, unknown>>(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 /**
- * Targets — the services being accessed
+ * Targets — the services being accessed (GitHub, Supabase, etc.)
  */
-export const targets = sqliteTable("targets", {
-  id: text("id").primaryKey(),
+export const targets = pgTable("targets", {
+  id: text("id").primaryKey().default(genId()),
   name: text("name").notNull().unique(),
   description: text("description"),
-  tags: text("tags").$type<string[]>(),
-  supports: text("supports", { mode: "json" }).$type<{
+  tags: jsonb("tags").$type<string[]>(),
+  supports: jsonb("supports").$type<{
     oauth: boolean;
     genesis: boolean;
     byoc: boolean;
     rogue: boolean;
   }>(),
-  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 /**
  * Policies — the rules governing slip requests
  */
-export const policies = sqliteTable("policies", {
-  id: text("id").primaryKey(),
+export const policies = pgTable("policies", {
+  id: text("id").primaryKey().default(genId()),
   name: text("name").notNull(),
   description: text("description"),
-  principals: text("principals").$type<string[]>(), // Glob patterns
-  actors: text("actors").$type<string[]>(), // Glob patterns
-  targets: text("targets").$type<string[]>(), // Glob patterns
-  autoApprove: text("auto_approve").$type<string[]>(), // Scope patterns
-  manualApprove: text("manual_approve").$type<string[]>(),
-  deny: text("deny").$type<string[]>(),
+  principals: jsonb("principals").$type<string[]>(), // Glob patterns
+  actors: jsonb("actors").$type<string[]>(),
+  targets: jsonb("targets").$type<string[]>(),
+  autoApprove: jsonb("auto_approve").$type<string[]>(),
+  manualApprove: jsonb("manual_approve").$type<string[]>(),
+  deny: jsonb("deny").$type<string[]>(),
   maxTtl: integer("max_ttl"), // Seconds, null = unlimited
-  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
-  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 /**
  * Slips — the authorization records
  */
-export const slips = sqliteTable("slips", {
-  id: text("id").primaryKey(),
+export const slips = pgTable("slips", {
+  id: text("id").primaryKey().default(genId()),
   actorId: text("actor_id").notNull().references(() => actors.id),
   principalId: text("principal_id").notNull().references(() => principals.id),
   targetId: text("target_id").notNull().references(() => targets.id),
-  requestedScope: text("requested_scope").$type<string[]>(),
-  grantedScope: text("granted_scope").$type<string[]>().notNull(),
-  issuedAt: integer("issued_at", { mode: "timestamp" }).notNull(),
-  expiresAt: integer("expires_at", { mode: "timestamp" }),
+  requestedScope: jsonb("requested_scope").$type<string[]>(),
+  grantedScope: jsonb("granted_scope").$type<string[]>().notNull(),
+  issuedAt: timestamp("issued_at").defaultNow().notNull(),
+  expiresAt: timestamp("expires_at"),
   provisioningMethod: text("provisioning_method").notNull(), // 'oauth', 'genesis', 'byoc', 'rogue'
   tokenId: text("token_id").references(() => tokens.id),
   revocationUrl: text("revocation_url"),
-  policyResult: text("policy_result", { mode: "json" }).$type<{
+  policyResult: jsonb("policy_result").$type<{
     decision: "auto_approve" | "manual_approve" | "deny";
     policyId: string | null;
     reason?: string;
     approvedBy?: string;
   }>().notNull(),
-  reason: text("reason"), // Why the actor requested it
-  status: text("status").notNull(), // 'active', 'revoked', 'expired'
-  revokedAt: integer("revoked_at", { mode: "timestamp" }),
+  reason: text("reason"),
+  status: text("status").notNull().default("active"), // 'active', 'revoked', 'expired'
+  revokedAt: timestamp("revoked_at"),
   revokedBy: text("revoked_by"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 /**
  * Tokens — the actual credentials
  */
-export const tokens = sqliteTable("tokens", {
-  id: text("id").primaryKey(),
+export const tokens = pgTable("tokens", {
+  id: text("id").primaryKey().default(genId()),
   slipId: text("slip_id").notNull().references(() => slips.id),
   type: text("type").notNull(), // 'bearer_token', 'api_key', 'oauth_client', 'jwt'
-  secret: text("secret"), // Encrypted
+  secret: text("secret"), // TODO: Encrypt this
   reference: text("reference"), // For revocation, lookup
-  metadata: text("metadata", { mode: "json" }).$type<Record<string, unknown>>(),
-  expiresAt: integer("expires_at", { mode: "timestamp" }),
-  status: text("status").notNull(), // 'active', 'revoked', 'expired'
-  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+  metadata: jsonb("metadata").$type<Record<string, unknown>>(),
+  expiresAt: timestamp("expires_at"),
+  status: text("status").notNull().default("active"), // 'active', 'revoked', 'expired'
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 /**
  * Audit log — all actions for compliance
  */
-export const auditLog = sqliteTable("audit_log", {
-  id: text("id").primaryKey(),
-  timestamp: integer("timestamp", { mode: "timestamp" }).notNull(),
+export const auditLog = pgTable("audit_log", {
+  id: text("id").primaryKey().default(genId()),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
   action: text("action").notNull(), // 'slip_requested', 'slip_granted', 'slip_revoked', etc.
   actorId: text("actor_id").references(() => actors.id),
   principalId: text("principal_id").references(() => principals.id),
   targetId: text("target_id").references(() => targets.id),
   slipId: text("slip_id").references(() => slips.id),
-  details: text("details", { mode: "json" }).$type<Record<string, unknown>>(),
+  details: jsonb("details").$type<Record<string, unknown>>(),
   ipAddress: text("ip_address"),
   userAgent: text("user_agent"),
 });
@@ -124,13 +125,28 @@ export const auditLog = sqliteTable("audit_log", {
 /**
  * BYOC credentials — user-provided credentials
  */
-export const byocCredentials = sqliteTable("byoc_credentials", {
-  id: text("id").primaryKey(),
+export const byocCredentials = pgTable("byoc_credentials", {
+  id: text("id").primaryKey().default(genId()),
   principalId: text("principal_id").notNull().references(() => principals.id),
   targetId: text("target_id").notNull().references(() => targets.id),
-  credential: text("credential").notNull(), // Encrypted
-  validatedAt: integer("validated_at", { mode: "timestamp" }),
-  lastUsedAt: integer("last_used_at", { mode: "timestamp" }),
-  status: text("status").notNull(), // 'active', 'revoked', 'expired'
-  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+  credential: text("credential").notNull(), // TODO: Encrypt this
+  validatedAt: timestamp("validated_at"),
+  lastUsedAt: timestamp("last_used_at"),
+  status: text("status").notNull().default("active"), // 'active', 'revoked', 'expired'
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+// Helper function to generate IDs
+function genId(): string {
+  return `${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+}
+
+// Types for inserts
+export type NewPrincipal = typeof principals.$inferInsert;
+export type NewActor = typeof actors.$inferInsert;
+export type NewTarget = typeof targets.$inferInsert;
+export type NewPolicy = typeof policies.$inferInsert;
+export type NewSlip = typeof slips.$inferInsert;
+export type NewToken = typeof tokens.$inferInsert;
+export type NewAuditLog = typeof auditLog.$inferInsert;
+export type NewByocCredential = typeof byocCredentials.$inferInsert;
