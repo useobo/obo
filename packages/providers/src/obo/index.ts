@@ -12,7 +12,6 @@
  */
 
 import type { Provider, SlipRequest, SlipResponse, Token } from "@obo/core";
-import { SignJWT } from "jose";
 
 // The scopes that OBO itself supports
 export const OBO_SCOPES = {
@@ -57,26 +56,18 @@ async function generateOBOToken(params: {
   slipId: string;
   ttl: number;
 }): Promise<{ id: string; token: string }> {
-  const secret = new TextEncoder().encode(
-    process.env.OBO_JWT_SECRET || "dev-secret-change-me"
-  );
+  // Use the crypto package's JWT utilities (supports key rotation)
+  const { signJWT } = await import("@obo/crypto");
 
-  const id = `obo_token_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
-
-  const jwt = await new SignJWT({
+  const token = await signJWT({
     principal: params.principal,
     scopes: params.scopes,
     slipId: params.slipId,
-    iss: "obo",
-    sub: params.principal,
-  })
-    .setProtectedHeader({ alg: "HS256" })
-    .setJti(id)
-    .setIssuedAt()
-    .setExpirationTime(Math.floor(Date.now() / 1000) + params.ttl)
-    .sign(secret);
+  }, params.ttl);
 
-  return { id, token: jwt };
+  const id = `obo_token_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+
+  return { id, token };
 }
 
 export const OboProvider: Provider = {

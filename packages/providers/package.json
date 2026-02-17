@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@obo/core": "workspace:*",
+    "@obo/crypto": "workspace:*",
     "jose": "^5.9.6"
   },
   "devDependencies": {

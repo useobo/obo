@@ -152,6 +152,10 @@ importers:
         version: 2.1.9(@types/node@22.19.11)
 
   packages/crypto:
+    dependencies:
+      jose:
+        specifier: ^5.9.6
+        version: 5.10.0
     devDependencies:
       '@types/node':
         specifier: ^22.10.5
@@ -231,6 +235,9 @@ importers:
       '@obo/core':
         specifier: workspace:*
         version: link:../core
+      '@obo/crypto':
+        specifier: workspace:*
+        version: link:../crypto
       jose:
         specifier: ^5.9.6
         version: 5.10.0

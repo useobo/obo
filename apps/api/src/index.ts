@@ -108,6 +108,16 @@ async function initializeDefaultData() {
 
 const t = initTRPC.create();
 
+/**
+ * Authentication middleware for JWT-protected routes
+ */
+const protectedProcedure = t.procedure.use(async ({ next, ctx }) => {
+  // Extract JWT from Authorization header
+  // For now, this is a placeholder - actual header parsing would happen
+  // in the HTTP layer and passed via context
+  return next({ ctx });
+});
+
 const slipService = createSlipService();
 slipService.registerProvider(GitHubProvider);
 slipService.registerProvider(SupabaseProvider);
@@ -569,6 +579,63 @@ After authorizing, call complete_oauth_flow with slip ID: ${slip.id}`;
     }),
 });
 
+const jwtRouter = t.router({
+  verify: t.procedure
+    .input(z.object({ token: z.string() }))
+    .query(async ({ input }) => {
+      const { verifyJWT } = await import("@obo/crypto");
+      try {
+        const result = await verifyJWT(input.token);
+        return {
+          valid: true,
+          payload: {
+            principal: result.principal,
+            scopes: result.scopes,
+            slipId: result.slipId,
+            issuer: result.iss,
+            expiresAt: result.exp,
+          },
+        };
+      } catch (e) {
+        return {
+          valid: false,
+          error: (e as Error).message,
+        };
+      }
+    }),
+
+  revoke: t.procedure
+    .input(z.object({
+      jti: z.string().describe("JWT ID or slip ID to revoke"),
+      reason: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const { revokeToken } = await import("@obo/crypto");
+      revokeToken(input.jti, input.reason);
+      return { success: true, revoked: input.jti };
+    }),
+
+  checkRevoked: t.procedure
+    .input(z.object({ jti: z.string() }))
+    .query(async ({ input }) => {
+      const { isTokenRevoked, getRevocationInfo } = await import("@obo/crypto");
+      const revoked = isTokenRevoked(input.jti);
+      return {
+        revoked,
+        info: revoked ? getRevocationInfo(input.jti) : null,
+      };
+    }),
+
+  keyInfo: t.procedure
+    .query(async () => {
+      const { getKeyInfo, hasKeyRotationConfigured } = await import("@obo/crypto");
+      return {
+        keys: getKeyInfo(),
+        rotationEnabled: hasKeyRotationConfigured(),
+      };
+    }),
+});
+
 const policyRouter = t.router({
   check: t.procedure
     .input(z.object({
@@ -596,6 +663,7 @@ const appRouter = t.router({
   slip: slipRouter,
   policy: policyRouter,
   provider: providerRouter,
+  jwt: jwtRouter,
 });
 
 export type AppRouter = typeof appRouter;

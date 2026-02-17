@@ -9,6 +9,12 @@
     "build": "tsc",
     "typecheck": "tsc --noEmit"
   },
+  "dependencies": {
+    "jose": "^5.9.6"
+  },
+  "optionalDependencies": {
+    "@google-cloud/kms": "^5.0.0"
+  },
   "devDependencies": {
     "@types/node": "^22.10.5",
     "typescript": "^5.7.2"

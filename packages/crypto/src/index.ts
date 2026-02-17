@@ -6,6 +6,12 @@
 
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from "crypto";
 
+// Re-export JWT utilities
+export * from "./jwt.js";
+
+// Re-export GCP KMS utilities (optional, requires @google-cloud/kms)
+export * from "./gcp-kms.js";
+
 /**
  * Encryption configuration
  */
