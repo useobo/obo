@@ -2,6 +2,29 @@
 
 Agentic API governance. Let AI agents act on your behalf — governed, audited, scoped.
 
+## Security
+
+> **IMPORTANT:** OBO stores sensitive credentials (API keys, OAuth tokens). Always configure encryption for production.
+
+### Encryption at Rest
+
+Tokens are encrypted using AES-256-GCM before storage. Configure with:
+
+```bash
+export OBO_ENCRYPTION_KEY="$(openssl rand -base64 32)"  # REQUIRED for production
+export OBO_ENCRYPT_AT_REST="true"  # default
+```
+
+### One-Time Token Delivery
+
+Optionally store only a hash, making tokens non-retrievable after initial delivery:
+
+```bash
+export OBO_ONE_TIME_DELIVERY="true"  # default false
+```
+
+See [`packages/crypto/README.md`](./packages/crypto/README.md) for full security documentation.
+
 ## The Vocabulary
 
 | Term | Meaning |

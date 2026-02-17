@@ -11,8 +11,13 @@ import { GitHubProvider } from "@obo/providers/dist/github/index.js";
 import { SupabaseProvider } from "@obo/providers/dist/supabase/index.js";
 import { OboProvider } from "@obo/providers/dist/obo/index.js";
 import { getDb, schema, genId } from "@obo/db";
+import { encrypt, decrypt, isEncrypted, getDefaultStorageConfig, type TokenStorageConfig } from "@obo/crypto";
 
 const db = getDb();
+
+// Token storage configuration
+const tokenConfig = getDefaultStorageConfig();
+console.log(`Token storage: encryptAtRest=${tokenConfig.encryptAtRest}, oneTimeDelivery=${tokenConfig.oneTimeDelivery}`);
 
 async function initializeDefaultData() {
   const existingTargets = await db.select().from(schema.targets);
@@ -186,13 +191,23 @@ const slipRouter = t.router({
       }).returning();
 
       if (result.token) {
+        // Encrypt secret before storing (if enabled and secret exists)
+        let storedSecret = result.token.secret || null;
+        if (tokenConfig.encryptAtRest && storedSecret && !isEncrypted(storedSecret)) {
+          storedSecret = encrypt(storedSecret);
+        }
+
         await ctx.db.insert(schema.tokens).values({
           id: result.token.id,
           slipId: slip.id,
           type: result.token.type,
-          secret: result.token.secret || null,
+          secret: storedSecret,
           reference: result.token.reference || null,
-          metadata: result.token.metadata || {},
+          metadata: {
+            ...(result.token.metadata || {}),
+            // Track whether secret is encrypted
+            encrypted: tokenConfig.encryptAtRest && storedSecret !== null,
+          },
           expiresAt: result.slip.expires_at,
         });
 
@@ -402,15 +417,21 @@ After authorizing, call complete_oauth_flow with slip ID: ${slip.id}`;
           // Success! Store the token and clean up
           const tokenId = `gh_token_${Date.now()}`;
 
+          // Encrypt secret before storing
+          const storedSecret = tokenConfig.encryptAtRest
+            ? encrypt(data.access_token)
+            : data.access_token;
+
           await ctx.db.insert(schema.tokens).values({
             id: tokenId,
             slipId: input.slipId,
             type: "oauth_access_token",
-            secret: data.access_token,
+            secret: storedSecret,
             reference: data.access_token.substring(0, 20) + "...",
             metadata: {
               token_type: data.token_type,
               scope: data.scope,
+              encrypted: tokenConfig.encryptAtRest,
             },
             expiresAt: slip.expiresAt,
           });
@@ -528,12 +549,19 @@ After authorizing, call complete_oauth_flow with slip ID: ${slip.id}`;
         throw new Error("Token not found in database");
       }
 
+      // Decrypt secret if it's encrypted
+      let secret = token.secret;
+      const isTokenEncrypted = (token.metadata?.encrypted as boolean) || false;
+      if (token.secret && isTokenEncrypted && isEncrypted(token.secret)) {
+        secret = decrypt(token.secret);
+      }
+
       return {
         hasToken: true,
         token: {
           id: token.id,
           type: token.type,
-          secret: token.secret, // In production, you might want to handle this more carefully
+          secret: secret,
           reference: token.reference,
           metadata: token.metadata,
         },
