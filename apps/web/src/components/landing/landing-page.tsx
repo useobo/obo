@@ -3,6 +3,7 @@ import { HeroSection } from "./sections/hero-section";
 import { ProblemSolutionSection } from "./sections/problem-solution";
 import { HowItWorksSection } from "./sections/how-it-works";
 import { FeaturesGridSection } from "./sections/features-grid";
+import { SelfReferentialProofSection } from "./sections/self-referential-proof";
 import { ComparisonSection } from "./sections/comparison-section";
 import { GettingStartedSection } from "./sections/getting-started";
 import { Footer } from "./sections/footer";
@@ -16,6 +17,7 @@ export function LandingPage() {
         <ProblemSolutionSection />
         <HowItWorksSection />
         <FeaturesGridSection />
+        <SelfReferentialProofSection />
         <ComparisonSection />
         <GettingStartedSection />
       </main>
