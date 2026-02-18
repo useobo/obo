@@ -1,109 +1,116 @@
-# @obo/crypto
+# @useobo/crypto
 
-Cryptographic utilities for secure token storage in OBO.
+Cryptographic utilities for OBO. Provides AES-256-GCM encryption, JWT signing/verification with key rotation support, and optional GCP Cloud KMS integration.
 
-## Security Features
+## Installation
 
-### Encryption at Rest
-
-Tokens (API keys, OAuth tokens, JWTs) are encrypted using AES-256-GCM before being stored in PostgreSQL.
-
-**Configuration:**
 ```bash
-# Set a strong encryption key (REQUIRED for production)
-export OBO_ENCRYPTION_KEY="your-secure-key-here"
-
-# Enable/disable encryption (default: true)
-export OBO_ENCRYPT_AT_REST="true"
+npm install @useobo/crypto
+# or
+pnpm add @useobo/crypto
 ```
 
-**How it works:**
-- Uses AES-256-GCM (authenticated encryption)
-- Key derived from `OBO_ENCRYPTION_KEY` using scrypt with salt
-- Format: `iv:authTag:encrypted` (all base64-encoded)
-- Each token gets a unique IV (initialization vector)
+## Features
 
-### One-Time Token Delivery (Optional)
+- **AES-256-GCM Encryption**: Authenticated encryption for sensitive data at rest
+- **JWT Signing & Verification**: Create and verify JWT tokens with HS256
+- **Key Rotation**: Support for multiple signing keys with seamless rotation
+- **JWT Revocation**: In-memory token blocklist for immediate invalidation
+- **GCP Cloud KMS**: Optional hardware-grade key management for enterprise deployments
 
-Store only a cryptographic hash of the token, making it non-retrievable after initial delivery.
+## Usage
 
-**Configuration:**
-```bash
-# Enable one-time delivery (default: false)
-export OBO_ONE_TIME_DELIVERY="true"
-```
-
-**How it works:**
-- Token is hashed using SHA-256 before storage
-- Hash cannot be reversed to recover the token
-- Token is only returned once to the requesting agent
-- Subsequent retrieval attempts fail
-
-## API
+### Encryption
 
 ```typescript
-import { encrypt, decrypt, isEncrypted, getDefaultStorageConfig } from "@obo/crypto";
+import { encrypt, decrypt, isEncrypted } from '@useobo/crypto';
 
-// Encrypt a secret
-const encrypted = encrypt("my-secret-token");
-// => "42G1oy6RwA0Nkype1wNmXA==:b8sWOqWBaPI1e1BCTEFdgQ==:u6BIX1ViJ55h..."
+// Encrypt sensitive data
+const encrypted = encrypt('my-secret-token');
+// Returns: "enc:v1:base64iv:base64ciphertext:base64tag"
 
-// Decrypt a secret
-const decrypted = decrypt(encrypted);
-// => "my-secret-token"
+// Check if data is encrypted
+if (isEncrypted(encrypted)) {
+  const decrypted = decrypt(encrypted);
+  console.log(decrypted); // "my-secret-token"
+}
+```
 
-// Check if a value is encrypted
-if (isEncrypted(value)) {
-  const secret = decrypt(value);
+### JWT Operations
+
+```typescript
+import { signJWT, verifyJWT, getKeyInfo } from '@useobo/crypto';
+
+// Sign a JWT
+const token = await signJWT({
+  principal: 'user@example.com',
+  scopes: ['repo:read', 'repo:write'],
+  slipId: 'slip_abc123',
+}, 3600); // expires in 1 hour
+
+// Verify a JWT
+const payload = await verifyJWT(token);
+console.log(payload.principal); // "user@example.com"
+
+// Get key information
+const keys = getKeyInfo();
+console.log(keys);
+// { primary: { id: '1', createdAt: ... }, secondary: [...] }
+```
+
+### JWT Revocation
+
+```typescript
+import { revokeToken, isTokenRevoked, cleanupExpiredRevocations } from '@useobo/crypto';
+
+// Revoke a token by JTI
+revokeToken('slip_abc123', 'User requested revocation');
+
+// Check if revoked
+if (isTokenRevoked('slip_abc123')) {
+  console.log('Token has been revoked');
 }
 
-// Get current configuration
-const config = getDefaultStorageConfig();
-// { encryptAtRest: true, oneTimeDelivery: false }
+// Cleanup old revocations (run periodically)
+cleanupExpiredRevocations(7 * 24 * 60 * 60 * 1000); // 7 days
 ```
 
-## Security Considerations
+### GCP Cloud KMS (Optional)
 
-### JWT Tokens
+```typescript
+import {
+  encryptWithKms,
+  decryptWithKms,
+  hasKmsConfigured
+} from '@useobo/crypto';
 
-Our OBO provider generates JWTs signed with HS256 (HMAC-SHA256). This uses `OBO_JWT_SECRET` for signing.
+// Check if KMS is configured
+if (hasKmsConfigured()) {
+  // Encrypt using GCP KMS
+  const ciphertext = await encryptWithKms('sensitive-data');
 
-**Recommendations for production:**
-1. Rotate `OBO_JWT_SECRET` periodically
-2. Use a proper key management service (KMS, AWS Secrets Manager, etc.)
-3. Implement JWT revocation list for immediate token invalidation
+  // Decrypt using GCP KMS
+  const plaintext = await decryptWithKms(ciphertext);
+}
+```
 
-### Encryption Keys
-
-**Development:** The default key is `"dev-key-change-me-in-production"`
-
-**Production:** MUST set `OBO_ENCRYPTION_KEY` to a strong, random value (at least 32 bytes):
+## Environment Variables
 
 ```bash
-# Generate a secure key
-openssl rand -base64 32
+# Encryption key (32 bytes base64-encoded)
+OBO_ENCRYPTION_KEY=your-32-byte-base64-key
+
+# JWT signing secrets (for key rotation)
+OBO_JWT_SECRET_1=primary-secret
+OBO_JWT_SECRET_2=secondary-secret
+
+# GCP KMS (optional)
+OBO_KMS_PROJECT_ID=my-project
+OBO_KMS_LOCATION_ID=global
+OBO_KMS_KEY_RING_ID=obo-keys
+OBO_KMS_KEY_ID=obo-encryption-key
 ```
 
-### Database Security
+## License
 
-Even with encryption:
-- Enable PostgreSQL SSL/TLS for connections
-- Use database credentials with least privilege
-- Enable row-level security for multi-tenant deployments
-- Consider transparent data encryption (TDE) at rest
-
-## Audit Trail
-
-All token operations are logged to `audit_log` table:
-- Token creation
-- Token retrieval (with decryption)
-- Token revocation
-- Failed attempts
-
-## Future Enhancements
-
-- [ ] Integration with AWS KMS / GCP KMS / Azure Key Vault
-- [ ] Per-provider key rotation schedules
-- [ ] Hardware security module (HSM) support
-- [ ] Token versioning for seamless rotation
-- [ ] Automated key expiration alerts
+MIT

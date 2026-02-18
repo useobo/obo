@@ -18,9 +18,9 @@ import {
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
-import { createSlipService } from "@obo/core/dist/slip/index.js";
-import { GitHubProvider, completeOAuthFlow } from "@obo/providers/dist/github/index.js";
-import { SupabaseProvider } from "@obo/providers/dist/supabase/index.js";
+import { createSlipService } from "@useobo/core/slip";
+import { GitHubProvider, completeOAuthFlow } from "@useobo/providers/github";
+import { SupabaseProvider } from "@useobo/providers/supabase";
 
 // ---------------------------------------------------------------------
 // Slip Service Setup

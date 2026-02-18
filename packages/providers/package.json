@@ -1,27 +1,59 @@
 {
-  "name": "@obo/providers",
+  "name": "@useobo/providers",
   "version": "0.0.1",
+  "description": "OBO Providers - Target integrations (GitHub, Supabase, OBO itself)",
   "type": "module",
   "exports": {
-    ".": "./dist/index.js",
-    "./github": "./dist/github/index.js",
-    "./supabase": "./dist/supabase/index.js",
-    "./obo": "./dist/obo/index.js",
-    "./dist/github/index.js": "./dist/github/index.js",
-    "./dist/supabase/index.js": "./dist/supabase/index.js",
-    "./dist/obo/index.js": "./dist/obo/index.js"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./github": {
+      "types": "./dist/github/index.d.ts",
+      "import": "./dist/github/index.js"
+    },
+    "./supabase": {
+      "types": "./dist/supabase/index.d.ts",
+      "import": "./dist/supabase/index.js"
+    },
+    "./obo": {
+      "types": "./dist/obo/index.d.ts",
+      "import": "./dist/obo/index.js"
+    }
   },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsc",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "pnpm build"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/useobo/obo",
+    "directory": "packages/providers"
+  },
+  "keywords": [
+    "obo",
+    "github",
+    "supabase",
+    "oauth",
+    "providers"
+  ],
+  "author": "Kyle To <kyle@kyleto.com>",
+  "license": "MIT",
   "dependencies": {
-    "@obo/core": "workspace:*",
-    "@obo/crypto": "workspace:*",
+    "@useobo/core": "workspace:*",
+    "@useobo/crypto": "workspace:*",
     "jose": "^5.9.6"
   },
   "devDependencies": {
     "@types/node": "^22.10.5",
     "typescript": "^5.7.2"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

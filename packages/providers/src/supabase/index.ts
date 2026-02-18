@@ -15,7 +15,7 @@
  * 4. We log everything for audit
  */
 
-import type { Provider, SlipRequest, SlipResponse } from "@obo/core";
+import type { Provider, SlipRequest, SlipResponse } from "@useobo/core";
 import { SignJWT } from "jose";
 
 export const SupabaseProvider: Provider = {
@@ -89,7 +89,7 @@ export const SupabaseProvider: Provider = {
   /**
    * Revoke a Supabase slip
    */
-  async revoke(slip: import("@obo/core").Slip): Promise<void> {
+  async revoke(slip: import("@useobo/core").Slip): Promise<void> {
     // TODO: Add JWT ID to revocation list
     // Our proxy will check this list before accepting tokens
   },

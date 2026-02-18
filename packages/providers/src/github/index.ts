@@ -10,7 +10,7 @@
  * 4. Return token to actor
  */
 
-import type { Provider, SlipRequest, SlipResponse, Scope, Token } from "@obo/core";
+import type { Provider, SlipRequest, SlipResponse, Scope, Token } from "@useobo/core";
 
 const GITHUB_DEVICE_CODE_URL = "https://github.com/login/device/code";
 const GITHUB_TOKEN_URL = "https://github.com/login/oauth/access_token";
@@ -197,7 +197,7 @@ After authorizing, use complete_oauth_flow with your slip ID to get the token.
   /**
    * Revoke a GitHub slip
    */
-  async revoke(slip: import("@obo/core").Slip): Promise<void> {
+  async revoke(slip: import("@useobo/core").Slip): Promise<void> {
     // GitHub doesn't provide a direct API to revoke OAuth tokens
     // Users must revoke via their GitHub settings
     console.error(`GitHub slip ${slip.id} revoked. Token should be revoked manually at GitHub settings.`);

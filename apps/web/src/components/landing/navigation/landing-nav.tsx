@@ -39,7 +39,7 @@ export function LandingNav() {
 
           <nav className="flex items-center gap-4">
             <a
-              href="https://github.com/kyleto/obo"
+              href="https://github.com/useobo/obo"
               target="_blank"
               rel="noopener noreferrer"
               className="hidden text-sm font-medium text-text-secondary transition-colors hover:text-text-primary sm:block"

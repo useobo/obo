@@ -29,7 +29,7 @@ export function Footer() {
             <ul className="space-y-3">
               <li>
                 <a
-                  href="https://github.com/kyleto/obo"
+                  href="https://github.com/useobo/obo"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm text-text-secondary transition-colors hover:text-text-primary"
@@ -62,7 +62,7 @@ export function Footer() {
             <ul className="space-y-3">
               <li>
                 <a
-                  href="https://github.com/kyleto/obo#readme"
+                  href="https://github.com/useobo/obo#readme"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm text-text-secondary transition-colors hover:text-text-primary"
@@ -72,7 +72,7 @@ export function Footer() {
               </li>
               <li>
                 <a
-                  href="https://github.com/kyleto/obo/blob/main/packages/mcp/README.md"
+                  href="https://github.com/useobo/obo/blob/main/packages/mcp/README.md"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm text-text-secondary transition-colors hover:text-text-primary"
@@ -82,7 +82,7 @@ export function Footer() {
               </li>
               <li>
                 <a
-                  href="https://github.com/kyleto/obo/issues"
+                  href="https://github.com/useobo/obo/issues"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm text-text-secondary transition-colors hover:text-text-primary"

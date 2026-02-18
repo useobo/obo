@@ -22,9 +22,17 @@
  * ```
  */
 
-import { KeyManagementServiceClient } from "@google-cloud/kms";
+// @google-cloud/kms is an optional dependency
+let KeyManagementServiceClient: any;
+let kmsClient: any;
 
-const kmsClient = new KeyManagementServiceClient();
+try {
+  const kms = require("@google-cloud/kms");
+  KeyManagementServiceClient = kms.KeyManagementServiceClient;
+  kmsClient = new KeyManagementServiceClient();
+} catch (e) {
+  // KMS not installed - functions will throw at runtime
+}
 
 /**
  * KMS configuration from environment
@@ -53,6 +61,9 @@ function getKmsConfig(): KmsConfig {
  * Get the full KMS key name
  */
 function getKeyName(config: KmsConfig): string {
+  if (!kmsClient) {
+    throw new Error("@google-cloud/kms is not installed. Run: pnpm add @google-cloud/kms");
+  }
   return kmsClient.cryptoKeyPath(
     config.projectId,
     config.location,

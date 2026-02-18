@@ -6,12 +6,12 @@ import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { initTRPC } from "@trpc/server";
 import { z } from "zod";
 import { eq, desc, and, type SQL } from "drizzle-orm";
-import { createSlipService } from "@obo/core/dist/slip/index.js";
-import { GitHubProvider } from "@obo/providers/dist/github/index.js";
-import { SupabaseProvider } from "@obo/providers/dist/supabase/index.js";
-import { OboProvider } from "@obo/providers/dist/obo/index.js";
+import { createSlipService } from "@useobo/core/slip";
+import { GitHubProvider } from "@useobo/providers/github";
+import { SupabaseProvider } from "@useobo/providers/supabase";
+import { OboProvider } from "@useobo/providers/obo";
 import { getDb, schema, genId } from "@obo/db";
-import { encrypt, decrypt, isEncrypted, getDefaultStorageConfig, type TokenStorageConfig } from "@obo/crypto";
+import { encrypt, decrypt, isEncrypted, getDefaultStorageConfig, type TokenStorageConfig } from "@useobo/crypto";
 
 const db = getDb();
 
@@ -583,7 +583,7 @@ const jwtRouter = t.router({
   verify: t.procedure
     .input(z.object({ token: z.string() }))
     .query(async ({ input }) => {
-      const { verifyJWT } = await import("@obo/crypto");
+      const { verifyJWT } = await import("@useobo/crypto");
       try {
         const result = await verifyJWT(input.token);
         return {
@@ -610,7 +610,7 @@ const jwtRouter = t.router({
       reason: z.string().optional(),
     }))
     .mutation(async ({ input }) => {
-      const { revokeToken } = await import("@obo/crypto");
+      const { revokeToken } = await import("@useobo/crypto");
       revokeToken(input.jti, input.reason);
       return { success: true, revoked: input.jti };
     }),
@@ -618,7 +618,7 @@ const jwtRouter = t.router({
   checkRevoked: t.procedure
     .input(z.object({ jti: z.string() }))
     .query(async ({ input }) => {
-      const { isTokenRevoked, getRevocationInfo } = await import("@obo/crypto");
+      const { isTokenRevoked, getRevocationInfo } = await import("@useobo/crypto");
       const revoked = isTokenRevoked(input.jti);
       return {
         revoked,
@@ -628,7 +628,7 @@ const jwtRouter = t.router({
 
   keyInfo: t.procedure
     .query(async () => {
-      const { getKeyInfo, hasKeyRotationConfigured } = await import("@obo/crypto");
+      const { getKeyInfo, hasKeyRotationConfigured } = await import("@useobo/crypto");
       return {
         keys: getKeyInfo(),
         rotationEnabled: hasKeyRotationConfigured(),
@@ -660,7 +660,7 @@ const providerRouter = t.router({
 });
 
 const appRouter = t.router({
-  slip: slipRouter,
+  obo: slipRouter,
   policy: policyRouter,
   provider: providerRouter,
   jwt: jwtRouter,

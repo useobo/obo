@@ -1,18 +1,48 @@
 {
-  "name": "@obo/core",
+  "name": "@useobo/core",
   "version": "0.0.1",
+  "description": "OBO Core - Agentic API governance engine",
   "type": "module",
   "exports": {
-    ".": "./dist/index.js",
-    "./types": "./dist/types.js",
-    "./slip": "./dist/slip/index.js",
-    "./dist/slip/index.js": "./dist/slip/index.js"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./types": {
+      "types": "./dist/types.d.ts",
+      "import": "./dist/types.js"
+    },
+    "./slip": {
+      "types": "./dist/slip/index.d.ts",
+      "import": "./dist/slip/index.js"
+    }
   },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsc",
     "typecheck": "tsc --noEmit",
-    "test": "vitest"
+    "test": "vitest",
+    "prepublishOnly": "pnpm build"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/useobo/obo",
+    "directory": "packages/core"
+  },
+  "keywords": [
+    "obo",
+    "ai",
+    "agents",
+    "api-governance",
+    "oauth",
+    "authorization",
+    "mcp"
+  ],
+  "author": "Kyle To <kyle@kyleto.com>",
+  "license": "MIT",
   "dependencies": {
     "jose": "^5.9.6",
     "zod": "^3.24.1"
@@ -21,5 +51,8 @@
     "@types/node": "^22.10.5",
     "typescript": "^5.7.2",
     "vitest": "^2.1.8"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

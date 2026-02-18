@@ -9,13 +9,13 @@ export function GettingStartedSection() {
   const [activeTab, setActiveTab] = useState<"self-hosted" | "managed">("self-hosted");
 
   const selfHostedCode = `# Install the obo MCP server
-pnpm add @obo/mcp-server
+pnpm add @useobo/mcp-server
 
 # Add to your Claude MCP config (~/.claude/mcp.json)
 {
   "obo": {
     "command": "node",
-    "args": ["./node_modules/@obo/mcp-server/dist/index.js"],
+    "args": ["./node_modules/@useobo/mcp-server/dist/index.js"],
     "env": {
       "OBO_API_URL": "http://localhost:3001",
       "OBO_PRINCIPAL": "your-email@example.com"
@@ -23,17 +23,17 @@ pnpm add @obo/mcp-server
   }
 }`;
 
-  const managedCode = `# Sign up at https://odie.io
+  const managedCode = `# Sign up at https://useobo.com (coming soon)
 # Create your first policy
 # Start giving your agents access!
 
-# Or use the MCP server with obo Cloud:
+# Or use the MCP server with OBO Cloud:
 {
   "obo": {
     "command": "node",
-    "args": ["./node_modules/@obo/mcp-server/dist/index.js"],
+    "args": ["./node_modules/@useobo/mcp-server/dist/index.js"],
     "env": {
-      "OBO_API_URL": "https://api.odie.io",
+      "OBO_API_URL": "https://api.useobo.com",
       "OBO_PRINCIPAL": "your-email@example.com"
     }
   }
@@ -88,7 +88,7 @@ pnpm add @obo/mcp-server
               <CodeBlock code={selfHostedCode} language="bash" />
               <div className="mt-6 flex justify-center gap-4">
                 <CTAButton
-                  href="https://github.com/kyleto/obo"
+                  href="https://github.com/useobo/obo"
                   variant="secondary"
                   className="group"
                 >

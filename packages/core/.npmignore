@@ -1,0 +1,20 @@
+# Source files (we publish dist/)
+src/
+*.ts
+!*.d.ts
+
+# Build artifacts
+tsconfig.json
+tsconfig.*.json
+
+# Development files
+*.test.ts
+*.spec.ts
+__tests__/
+__mocks__/
+
+# Misc
+.gitignore
+.env*
+*.log
+.DS_Store

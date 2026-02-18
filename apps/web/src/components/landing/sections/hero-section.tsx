@@ -41,7 +41,7 @@ export function HeroSection() {
                     Get Started Free
                   </CTAButton>
                   <CTAButton
-                    href="https://github.com/kyleto/obo"
+                    href="https://github.com/useobo/obo"
                     variant="secondary"
                     className="group"
                   >

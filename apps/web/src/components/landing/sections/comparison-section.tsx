@@ -62,7 +62,7 @@ export function ComparisonSection() {
             </ul>
 
             <CTAButton
-              href="https://github.com/kyleto/obo"
+              href="https://github.com/useobo/obo"
               variant="secondary"
               className="w-full justify-center"
             >

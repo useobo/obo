@@ -12,7 +12,7 @@
     "test": "vitest"
   },
   "dependencies": {
-    "@obo/core": "workspace:*",
+    "@useobo/core": "workspace:*",
     "@obo/db": "workspace:*",
     "minimatch": "^10.0.2"
   },

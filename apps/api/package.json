@@ -11,10 +11,10 @@
   },
   "dependencies": {
     "@hono/node-server": "^1.13.7",
-    "@obo/core": "workspace:*",
-    "@obo/crypto": "workspace:*",
+    "@useobo/core": "workspace:*",
+    "@useobo/crypto": "workspace:*",
+    "@useobo/providers": "workspace:*",
     "@obo/db": "workspace:*",
-    "@obo/providers": "workspace:*",
     "@trpc/server": "^11.0.0",
     "drizzle-orm": "^0.38.4",
     "hono": "^4.6.16",

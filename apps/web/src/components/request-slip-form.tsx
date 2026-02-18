@@ -8,7 +8,7 @@ export function RequestSlipForm() {
   const [principal, setPrincipal] = useState("kaarch@gmail.com");
   const [scopes, setScopes] = useState("repos:read");
 
-  const requestSlip = trpc.slip.request.useMutation();
+  const requestSlip = trpc.obo.request.useMutation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

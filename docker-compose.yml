@@ -1,22 +1,42 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:16-alpine
     container_name: obo-postgres
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
       POSTGRES_DB: obo
+      POSTGRES_USER: obo
+      POSTGRES_PASSWORD: obo_dev_change_me
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
+      test: ["CMD-SHELL", "pg_isready -U obo"]
+      interval: 10s
       timeout: 5s
       retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: obo-api
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://obo:obo_dev_change_me@postgres:5432/obo
+      OBO_JWT_SECRET_1: ${OBO_JWT_SECRET_1}
+      OBO_JWT_SECRET_2: ${OBO_JWT_SECRET_2}
+      OBO_ENCRYPTION_KEY: ${OBO_ENCRYPTION_KEY}
+      OBO_ENCRYPT_AT_REST: "true"
+      OBO_ONE_TIME_DELIVERY: "false"
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
 
 volumes:
   postgres_data:

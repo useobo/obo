@@ -1,29 +1,58 @@
 {
-  "name": "@obo/mcp-server",
+  "name": "@useobo/mcp-server",
   "version": "0.0.1",
+  "description": "OBO MCP Server - Connect OBO to MCP-compatible AI agents",
   "type": "module",
-  "description": "MCP server for OBO — lets AI agents request slips",
   "bin": {
     "obo-mcp": "./dist/index.js"
   },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsup src/index.ts --format esm --out-dir dist --external @modelcontextprotocol/sdk --external zod",
     "dev": "tsup src/index.ts --format esm --out-dir dist --external @modelcontextprotocol/sdk --external zod --watch",
     "start": "node dist/index.js",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "pnpm build"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/useobo/obo",
+    "directory": "packages/mcp"
+  },
+  "keywords": [
+    "obo",
+    "mcp",
+    "model-context-protocol",
+    "claude",
+    "ai",
+    "agents"
+  ],
+  "author": "Kyle To <kyle@kyleto.com>",
+  "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.4",
-    "@obo/core": "workspace:*",
-    "@obo/providers": "workspace:*",
+    "@useobo/core": "workspace:*",
+    "@useobo/providers": "workspace:*",
     "zod": "^3.24.1"
   },
   "devDependencies": {
     "@types/node": "^22.10.5",
-    "typescript": "^5.7.2",
-    "tsup": "^8.3.5"
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2"
   },
   "tsup": {
     "clean": true
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

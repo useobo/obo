@@ -69,7 +69,7 @@ list_slips(principal="you@example.com")`;
 
             <div className="mt-8">
               <CTAButton
-                href="https://github.com/kyleto/obo/blob/main/packages/providers/src/obo/index.ts"
+                href="https://github.com/useobo/obo/blob/main/packages/providers/src/obo/index.ts"
                 variant="secondary"
                 className="group"
               >

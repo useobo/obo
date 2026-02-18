@@ -11,7 +11,7 @@
  * This proves the OBO protocol works by using OBO to manage OBO.
  */
 
-import type { Provider, SlipRequest, SlipResponse, Token } from "@obo/core";
+import type { Provider, SlipRequest, SlipResponse, Token } from "@useobo/core";
 
 // The scopes that OBO itself supports
 export const OBO_SCOPES = {
@@ -57,7 +57,7 @@ async function generateOBOToken(params: {
   ttl: number;
 }): Promise<{ id: string; token: string }> {
   // Use the crypto package's JWT utilities (supports key rotation)
-  const { signJWT } = await import("@obo/crypto");
+  const { signJWT } = await import("@useobo/crypto");
 
   const token = await signJWT({
     principal: params.principal,
@@ -216,7 +216,7 @@ export const OboProvider: Provider = {
   /**
    * Revoke an OBO slip/token
    */
-  async revoke(slip: import("@obo/core").Slip): Promise<void> {
+  async revoke(slip: import("@useobo/core").Slip): Promise<void> {
     // Add the slip/token to a revocation list
     // In production, this would be checked by the OBO API
     console.log(`OBO slip ${slip.id} revoked. Token should be added to revocation list.`);
