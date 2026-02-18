@@ -186,4 +186,4 @@ Contributions welcome! See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for guidelines
 
 ## License
 
-[MIT](./LICENSE) — © 2025 Kyle To
+[MIT](./LICENSE) — © 2026 Kyle Arch
