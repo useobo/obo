@@ -10,6 +10,10 @@ import { createSlipService } from "@useobo/core/slip";
 import { GitHubProvider } from "@useobo/providers/github";
 import { SupabaseProvider } from "@useobo/providers/supabase";
 import { OboProvider } from "@useobo/providers/obo";
+import { VercelProvider } from "@useobo/providers/vercel";
+import { SlackProvider } from "@useobo/providers/slack";
+import { LinearProvider } from "@useobo/providers/linear";
+import { NotionProvider } from "@useobo/providers/notion";
 import { getDb, schema, genId } from "@obo/db";
 import { encrypt, decrypt, isEncrypted, getDefaultStorageConfig, type TokenStorageConfig } from "@useobo/crypto";
 
@@ -45,6 +49,38 @@ async function initializeDefaultData() {
       description: "obo - Self-referential access management",
       tags: ["internal", "self-hosted", "api"],
       supports: { oauth: false, genesis: true, byoc: true, rogue: false },
+    }).onConflictDoNothing();
+
+    await db.insert(schema.targets).values({
+      id: genId(),
+      name: "vercel",
+      description: "Vercel - Deploy frontend projects and serverless functions",
+      tags: ["deployment", "frontend", "nextjs", "serverless"],
+      supports: { oauth: false, genesis: false, byoc: true, rogue: false },
+    }).onConflictDoNothing();
+
+    await db.insert(schema.targets).values({
+      id: genId(),
+      name: "slack",
+      description: "Slack - Messaging and notifications for teams",
+      tags: ["messaging", "chat", "notifications", "team"],
+      supports: { oauth: false, genesis: false, byoc: true, rogue: false },
+    }).onConflictDoNothing();
+
+    await db.insert(schema.targets).values({
+      id: genId(),
+      name: "linear",
+      description: "Linear - Project management and issue tracking",
+      tags: ["project-management", "issues", "tracking", "agile"],
+      supports: { oauth: false, genesis: false, byoc: true, rogue: false },
+    }).onConflictDoNothing();
+
+    await db.insert(schema.targets).values({
+      id: genId(),
+      name: "notion",
+      description: "Notion - Docs, databases, and wikis",
+      tags: ["docs", "database", "wiki", "knowledge"],
+      supports: { oauth: false, genesis: false, byoc: true, rogue: false },
     }).onConflictDoNothing();
 
     console.log("Initialized default targets");
@@ -90,6 +126,54 @@ async function initializeDefaultData() {
         deny: [],
         maxTtl: 3600,
       },
+      {
+        id: genId(),
+        name: "Vercel Default",
+        description: "Default policy for Vercel access",
+        principals: ["*"],
+        actors: ["*"],
+        targets: ["vercel"],
+        autoApprove: ["projects:read", "deployments:read"],
+        manualApprove: ["projects:write", "deployments:write", "deployment:trigger"],
+        deny: [],
+        maxTtl: 3600,
+      },
+      {
+        id: genId(),
+        name: "Slack Default",
+        description: "Default policy for Slack access",
+        principals: ["*"],
+        actors: ["*"],
+        targets: ["slack"],
+        autoApprove: ["chat:write", "channels:read", "users:read"],
+        manualApprove: ["channels:write", "files:write", "users:write"],
+        deny: [],
+        maxTtl: 3600,
+      },
+      {
+        id: genId(),
+        name: "Linear Default",
+        description: "Default policy for Linear access",
+        principals: ["*"],
+        actors: ["*"],
+        targets: ["linear"],
+        autoApprove: ["issues:read", "teams:read", "projects:read"],
+        manualApprove: ["issues:write", "issues:create", "projects:write"],
+        deny: [],
+        maxTtl: 3600,
+      },
+      {
+        id: genId(),
+        name: "Notion Default",
+        description: "Default policy for Notion access",
+        principals: ["*"],
+        actors: ["*"],
+        targets: ["notion"],
+        autoApprove: ["pages:read", "databases:read", "search"],
+        manualApprove: ["pages:write", "databases:write", "blocks:write"],
+        deny: [],
+        maxTtl: 3600,
+      },
     ]).onConflictDoNothing();
 
     console.log("Initialized default policies");
@@ -122,6 +206,10 @@ const slipService = createSlipService();
 slipService.registerProvider(GitHubProvider);
 slipService.registerProvider(SupabaseProvider);
 slipService.registerProvider(OboProvider);
+slipService.registerProvider(VercelProvider);
+slipService.registerProvider(SlackProvider);
+slipService.registerProvider(LinearProvider);
+slipService.registerProvider(NotionProvider);
 
 interface Context {
   db: typeof db;
@@ -660,9 +748,9 @@ const providerRouter = t.router({
 });
 
 const appRouter = t.router({
-  obo: slipRouter,
-  policy: policyRouter,
-  provider: providerRouter,
+  slips: slipRouter,
+  policies: policyRouter,
+  providers: providerRouter,
   jwt: jwtRouter,
 });
 

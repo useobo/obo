@@ -21,6 +21,10 @@ import { z } from "zod";
 import { createSlipService } from "@useobo/core/slip";
 import { GitHubProvider, completeOAuthFlow } from "@useobo/providers/github";
 import { SupabaseProvider } from "@useobo/providers/supabase";
+import { VercelProvider } from "@useobo/providers/vercel";
+import { SlackProvider } from "@useobo/providers/slack";
+import { LinearProvider } from "@useobo/providers/linear";
+import { NotionProvider } from "@useobo/providers/notion";
 
 // ---------------------------------------------------------------------
 // Slip Service Setup
@@ -31,6 +35,10 @@ const slipService = createSlipService();
 // Register providers
 slipService.registerProvider(GitHubProvider);
 slipService.registerProvider(SupabaseProvider);
+slipService.registerProvider(VercelProvider);
+slipService.registerProvider(SlackProvider);
+slipService.registerProvider(LinearProvider);
+slipService.registerProvider(NotionProvider);
 
 // ---------------------------------------------------------------------
 // Tool Schemas

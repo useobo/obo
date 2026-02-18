@@ -19,6 +19,22 @@
     "./obo": {
       "types": "./dist/obo/index.d.ts",
       "import": "./dist/obo/index.js"
+    },
+    "./vercel": {
+      "types": "./dist/vercel/index.d.ts",
+      "import": "./dist/vercel/index.js"
+    },
+    "./slack": {
+      "types": "./dist/slack/index.d.ts",
+      "import": "./dist/slack/index.js"
+    },
+    "./linear": {
+      "types": "./dist/linear/index.d.ts",
+      "import": "./dist/linear/index.js"
+    },
+    "./notion": {
+      "types": "./dist/notion/index.d.ts",
+      "import": "./dist/notion/index.js"
     }
   },
   "files": [
