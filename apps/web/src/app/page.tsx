@@ -3,6 +3,10 @@ import { SlipList } from "@/components/slip-list";
 import { RequestSlipForm } from "@/components/request-slip-form";
 import { Stats } from "@/components/stats";
 import { UserButton } from "@clerk/nextjs";
+import Link from "next/link";
+
+// Force dynamic rendering to skip Clerk validation during build
+export const dynamic = 'force-dynamic';
 
 export default function HomePage() {
   return (
@@ -16,6 +20,12 @@ export default function HomePage() {
                 <p className="text-sm text-text-secondary">On Behalf Of — Agentic API Governance</p>
               </div>
               <div className="flex items-center gap-4">
+                <Link
+                  href="/registry"
+                  className="text-sm text-text-secondary hover:text-accent-primary transition-colors"
+                >
+                  Registry
+                </Link>
                 <UserButton afterSignOutUrl="/"/>
               </div>
             </div>
