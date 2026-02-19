@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { providerCategories } from "./scope-presets";
-import { ProviderAvatar, getProviderColor } from "./provider-avatar";
+import { ProviderAvatar } from "./provider-avatar";
 
 interface Provider {
   id: string;
@@ -52,7 +52,7 @@ export function ProviderSelector({ value, onChange }: ProviderSelectorProps) {
 
   return (
     <div className="relative">
-      <label htmlFor="provider-search" className="mb-2 block text-sm font-medium text-text-primary">
+      <label htmlFor="provider-search" className="mb-2 block text-sm font-medium text-white">
         Select Provider
       </label>
 
@@ -60,30 +60,30 @@ export function ProviderSelector({ value, onChange }: ProviderSelectorProps) {
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex w-full items-center justify-between rounded-xl border border-border-default bg-surface-100 px-4 py-3 text-left transition-colors hover:border-border-hover focus:border-border-focus focus:outline-none focus:ring-2 focus:ring-accent-500/40"
+        className="flex w-full items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-left transition-colors hover:border-white/20 focus:border-white/20 focus:outline-none focus:ring-2 focus:ring-purple-500/40"
       >
         {selectedProvider ? (
           <div className="flex items-center gap-3">
             <ProviderAvatar name={selectedProvider.name} size="lg" />
             <div className="flex items-center gap-2">
-              <span className="font-medium text-text-primary capitalize">{selectedProvider.name}</span>
+              <span className="font-medium text-white capitalize">{selectedProvider.name}</span>
               {selectedProvider.supports.oauth && (
-                <span className="rounded-full bg-status-info-bg px-2 py-0.5 text-[10px] font-medium text-status-info-text border border-status-info-border">
+                <span className="rounded-full bg-blue-500/20 px-2 py-0.5 text-[10px] font-medium text-blue-400 border border-blue-500/30">
                   OAuth
                 </span>
               )}
               {selectedProvider.supports.genesis && (
-                <span className="rounded-full bg-status-success-bg px-2 py-0.5 text-[10px] font-medium text-status-success-text border border-status-success-border">
+                <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-medium text-emerald-400 border border-emerald-500/30">
                   Genesis
                 </span>
               )}
             </div>
           </div>
         ) : (
-          <span className="text-text-tertiary">Search providers...</span>
+          <span className="text-white/40">Search providers...</span>
         )}
         <svg
-          className={`h-5 w-5 text-text-secondary transition-transform ${isOpen ? "rotate-180" : ""}`}
+          className={`h-5 w-5 text-white/60 transition-transform ${isOpen ? "rotate-180" : ""}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -94,16 +94,16 @@ export function ProviderSelector({ value, onChange }: ProviderSelectorProps) {
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute z-50 mt-2 max-h-96 w-full overflow-hidden rounded-2xl border border-border-default bg-surface-50 shadow-[0_10px_30px_rgba(46,42,38,0.12)]">
+        <div className="absolute z-50 mt-2 max-h-96 w-full overflow-hidden rounded-2xl border border-white/10 bg-[#0f0f0f] shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
           {/* Search input */}
-          <div className="border-b border-border-default p-3">
+          <div className="border-b border-white/10 p-3">
             <input
               id="provider-search"
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search providers..."
-              className="w-full rounded-lg border border-border-default bg-surface-100 px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:border-border-focus focus:outline-none focus:ring-2 focus:ring-accent-500/40"
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-white/20 focus:outline-none focus:ring-2 focus:ring-purple-500/40"
               autoFocus
             />
           </div>
@@ -111,19 +111,19 @@ export function ProviderSelector({ value, onChange }: ProviderSelectorProps) {
           {/* Provider list */}
           <div className="max-h-80 overflow-y-auto">
             {isLoading ? (
-              <div className="p-8 text-center text-text-secondary">Loading providers...</div>
+              <div className="p-8 text-center text-white/50">Loading providers...</div>
             ) : isError ? (
-              <div className="p-8 text-center text-status-error-text">
+              <div className="p-8 text-center text-red-400">
                 Failed to load providers.{" "}
                 {error?.message && <span className="text-xs">({error.message})</span>}
               </div>
             ) : !filteredProviders || filteredProviders.length === 0 ? (
-              <div className="p-8 text-center text-text-secondary">No providers found</div>
+              <div className="p-8 text-center text-white/50">No providers found</div>
             ) : (
               <div className="p-2">
                 {Object.entries(groupedProviders || {}).map(([category, categoryProviders]) => (
                   <div key={category} className="mb-4 last:mb-0">
-                    <div className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-text-tertiary">
+                    <div className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-white/40">
                       {category}
                     </div>
                     {categoryProviders.map((provider: Provider) => (
@@ -135,23 +135,23 @@ export function ProviderSelector({ value, onChange }: ProviderSelectorProps) {
                           setIsOpen(false);
                           setSearch("");
                         }}
-                        className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-surface-200 ${
-                          value === provider.name ? "bg-accent-100" : ""
+                        className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-white/5 ${
+                          value === provider.name ? "bg-purple-500/20" : ""
                         }`}
                       >
                         <ProviderAvatar name={provider.name} size="md" />
                         <div className="flex flex-1 items-center justify-between">
-                          <span className="font-medium text-text-primary capitalize">
+                          <span className="font-medium text-white capitalize">
                             {provider.name}
                           </span>
                           <div className="flex items-center gap-1.5">
                             {provider.supports.oauth && (
-                              <span className="rounded-full bg-status-info-bg px-1.5 py-0.5 text-[10px] font-medium text-status-info-text border border-status-info-border">
+                              <span className="rounded-full bg-blue-500/20 px-1.5 py-0.5 text-[10px] font-medium text-blue-400 border border-blue-500/30">
                                 OAuth
                               </span>
                             )}
                             {provider.supports.genesis && (
-                              <span className="rounded-full bg-status-success-bg px-1.5 py-0.5 text-[10px] font-medium text-status-success-text border border-status-success-border">
+                              <span className="rounded-full bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400 border border-emerald-500/30">
                                 Genesis
                               </span>
                             )}

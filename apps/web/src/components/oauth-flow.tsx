@@ -94,16 +94,16 @@ export function OAuthFlow({ slipId, instructions, onComplete }: OAuthFlowProps) 
 
   if (flowState === "success" && token) {
     return (
-      <div className="rounded-2xl border border-status-success-border bg-status-success-bg p-6">
+      <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-6">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-status-success-border">
-            <svg className="h-6 w-6 text-status-success-text" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500/20">
+            <svg className="h-6 w-6 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
           <div>
-            <h3 className="font-semibold text-status-success-text">Authorization Complete!</h3>
-            <p className="text-sm text-status-success-text opacity-80">
+            <h3 className="font-semibold text-emerald-400">Authorization Complete!</h3>
+            <p className="text-sm text-emerald-400/80">
               Your slip is now active and ready to use.
             </p>
           </div>
@@ -111,16 +111,16 @@ export function OAuthFlow({ slipId, instructions, onComplete }: OAuthFlowProps) 
 
         {/* Token display */}
         <div className="mt-4">
-          <label className="mb-2 block text-sm font-medium text-status-success-text">
+          <label className="mb-2 block text-sm font-medium text-emerald-400">
             Access Token
           </label>
           <div className="flex items-center gap-2">
-            <code className="flex-1 rounded-lg bg-status-success-border/30 px-3 py-2 text-sm font-mono text-status-success-text">
+            <code className="flex-1 rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-mono text-emerald-400">
               {token.slice(0, 12)}...{token.slice(-4)}
             </code>
             <button
               onClick={copyToken}
-              className="rounded-lg bg-status-success-border px-3 py-2 text-sm font-medium text-status-success-text hover:bg-status-success-border/50 transition-colors"
+              className="rounded-lg bg-emerald-500/20 px-3 py-2 text-sm font-medium text-emerald-400 hover:bg-emerald-500/30 transition-colors"
             >
               {copied ? "Copied!" : "Copy"}
             </button>
@@ -132,21 +132,21 @@ export function OAuthFlow({ slipId, instructions, onComplete }: OAuthFlowProps) 
 
   if (flowState === "error") {
     return (
-      <div className="rounded-2xl border border-status-error-border bg-status-error-bg p-6">
+      <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-6">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-status-error-border">
-            <svg className="h-6 w-6 text-status-error-text" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-500/20">
+            <svg className="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </div>
           <div>
-            <h3 className="font-semibold text-status-error-text">Authorization Failed</h3>
-            <p className="text-sm text-status-error-text opacity-80">{error}</p>
+            <h3 className="font-semibold text-red-400">Authorization Failed</h3>
+            <p className="text-sm text-red-400/80">{error}</p>
           </div>
         </div>
         <button
           onClick={() => setFlowState("pending")}
-          className="mt-4 rounded-lg bg-status-error-border px-4 py-2 text-sm font-medium text-status-error-text hover:bg-status-error-border/50 transition-colors"
+          className="mt-4 rounded-lg bg-red-500/20 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-500/30 transition-colors"
         >
           Try Again
         </button>
@@ -155,20 +155,20 @@ export function OAuthFlow({ slipId, instructions, onComplete }: OAuthFlowProps) 
   }
 
   return (
-    <div className="rounded-2xl border border-border-default bg-surface-50 p-6">
+    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
       <div className="flex items-start gap-4">
         {/* Left side - Instructions */}
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-status-info-bg">
-              <svg className="h-5 w-5 animate-spin text-status-info-text" fill="none" viewBox="0 0 24 24">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-500/20">
+              <svg className="h-5 w-5 animate-spin text-blue-400" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
               </svg>
             </div>
             <div>
-              <h3 className="font-semibold text-text-primary">Authorization Required</h3>
-              <p className="text-sm text-text-secondary">
+              <h3 className="font-semibold text-white">Authorization Required</h3>
+              <p className="text-sm text-white/60">
                 Complete the authorization to activate your slip
               </p>
             </div>
@@ -176,17 +176,17 @@ export function OAuthFlow({ slipId, instructions, onComplete }: OAuthFlowProps) 
 
           {/* Step 1: URL */}
           <div className="mb-4">
-            <label className="mb-1.5 block text-sm font-medium text-text-secondary">
+            <label className="mb-1.5 block text-sm font-medium text-white/70">
               Step 1: Visit this URL
             </label>
             <div className="flex items-center gap-2">
-              <code className="flex-1 rounded-lg bg-surface-200 px-3 py-2 text-sm font-mono text-text-primary break-all">
+              <code className="flex-1 rounded-lg bg-white/5 px-3 py-2 text-sm font-mono text-white break-all">
                 {authUrl || "Loading..."}
               </code>
               <button
                 onClick={copyUrl}
                 disabled={!authUrl}
-                className="rounded-lg bg-surface-200 px-3 py-2 text-sm font-medium text-text-primary hover:bg-surface-300 disabled:opacity-50 transition-colors"
+                className="rounded-lg bg-white/10 px-3 py-2 text-sm font-medium text-white hover:bg-white/20 disabled:opacity-50 transition-colors"
               >
                 {copied ? "Copied!" : "Copy"}
               </button>
@@ -196,16 +196,16 @@ export function OAuthFlow({ slipId, instructions, onComplete }: OAuthFlowProps) 
           {/* Step 2: Code (if applicable, e.g., GitHub device flow) */}
           {userCode && (
             <div className="mb-4">
-              <label className="mb-1.5 block text-sm font-medium text-text-secondary">
+              <label className="mb-1.5 block text-sm font-medium text-white/70">
                 Step 2: Enter this code
               </label>
               <div className="flex items-center gap-2">
-                <code className="flex-1 rounded-lg bg-surface-200 px-3 py-2 text-center text-lg font-mono tracking-widest text-text-primary">
+                <code className="flex-1 rounded-lg bg-white/5 px-3 py-2 text-center text-lg font-mono tracking-widest text-white">
                   {userCode}
                 </code>
                 <button
                   onClick={copyCode}
-                  className="rounded-lg bg-surface-200 px-3 py-2 text-sm font-medium text-text-primary hover:bg-surface-300 transition-colors"
+                  className="rounded-lg bg-white/10 px-3 py-2 text-sm font-medium text-white hover:bg-white/20 transition-colors"
                 >
                   {copied ? "Copied!" : "Copy"}
                 </button>
@@ -215,10 +215,10 @@ export function OAuthFlow({ slipId, instructions, onComplete }: OAuthFlowProps) 
 
           {/* Step 3: Authorize */}
           <div className="mb-4">
-            <label className="mb-1.5 block text-sm font-medium text-text-secondary">
+            <label className="mb-1.5 block text-sm font-medium text-white/70">
               {userCode ? "Step 3: Authorize the request" : "Step 2: Authorize the request"}
             </label>
-            <p className="text-sm text-text-tertiary">
+            <p className="text-sm text-white/40">
               After authorizing, your slip will be automatically activated. This page will update.
             </p>
           </div>
@@ -229,7 +229,7 @@ export function OAuthFlow({ slipId, instructions, onComplete }: OAuthFlowProps) 
               href={authUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-xl bg-accent-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-accent-600"
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-500 to-emerald-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:opacity-90"
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -242,9 +242,9 @@ export function OAuthFlow({ slipId, instructions, onComplete }: OAuthFlowProps) 
         {/* Right side - QR Code */}
         {qrUrl && (
           <div className="hidden sm:block">
-            <div className="rounded-xl border border-border-default bg-white p-3">
+            <div className="rounded-xl border border-white/10 bg-white p-3">
               <img src={qrUrl} alt="QR Code" className="h-40 w-40" />
-              <p className="mt-2 text-center text-xs text-text-tertiary">
+              <p className="mt-2 text-center text-xs text-gray-500">
                 Scan with mobile device
               </p>
             </div>
@@ -254,7 +254,7 @@ export function OAuthFlow({ slipId, instructions, onComplete }: OAuthFlowProps) 
 
       {/* Polling status */}
       {flowState === "polling" && (
-        <div className="mt-4 flex items-center gap-2 rounded-lg bg-status-info-bg px-3 py-2 text-sm text-status-info-text">
+        <div className="mt-4 flex items-center gap-2 rounded-lg bg-blue-500/10 px-3 py-2 text-sm text-blue-400">
           <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
