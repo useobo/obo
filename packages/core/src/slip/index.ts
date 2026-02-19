@@ -65,6 +65,16 @@ export class SlipService {
     providerRegistry.set(provider.name, provider);
   }
 
+  registerPolicy(policy: Policy): void {
+    policyRegistry.set(policy.id, policy);
+  }
+
+  registerPolicies(policies: Policy[]): void {
+    for (const policy of policies) {
+      policyRegistry.set(policy.id, policy);
+    }
+  }
+
   getProvider(target: Target): Provider | undefined {
     return providerRegistry.get(target);
   }
@@ -92,7 +102,12 @@ export class SlipService {
       response.token.slip_id = slip.id;
     }
 
-    return { slip, token: response.token, instructions: response.instructions };
+    return {
+      slip,
+      token: response.token,
+      instructions: response.instructions,
+      deviceCodeInfo: response.deviceCodeInfo,
+    };
   }
 
   listSlips(filter?: {

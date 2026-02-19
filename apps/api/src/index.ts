@@ -1,3 +1,6 @@
+import { config } from "dotenv";
+config({ path: new URL("../.env", import.meta.url) });
+
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
@@ -14,8 +17,16 @@ import { VercelProvider } from "@useobo/providers/vercel";
 import { SlackProvider } from "@useobo/providers/slack";
 import { LinearProvider } from "@useobo/providers/linear";
 import { NotionProvider } from "@useobo/providers/notion";
+import { HuggingFaceProvider } from "@useobo/providers/huggingface";
+import { OpenAIProvider } from "@useobo/providers/openai";
+import { TwitchProvider } from "@useobo/providers/twitch";
+import { GoogleCloudProvider } from "@useobo/providers/googlecloud";
+import { StravaProvider } from "@useobo/providers/strava";
+import { StripeProvider } from "@useobo/providers/stripe";
+import { DiscordProvider } from "@useobo/providers/discord";
 import { getDb, schema, genId } from "@obo/db";
 import { encrypt, decrypt, isEncrypted, getDefaultStorageConfig, type TokenStorageConfig } from "@useobo/crypto";
+import { handleCallback, generateCallbackHtml } from "./callback";
 
 const db = getDb();
 
@@ -23,160 +34,279 @@ const db = getDb();
 const tokenConfig = getDefaultStorageConfig();
 console.log(`Token storage: encryptAtRest=${tokenConfig.encryptAtRest}, oneTimeDelivery=${tokenConfig.oneTimeDelivery}`);
 
+// All available providers with their configurations
+const allProviders = [
+  {
+    name: "github",
+    description: "GitHub - Git hosting and code collaboration",
+    tags: ["git", "hosting", "code", "repos"],
+    supports: { oauth: true, genesis: true, byoc: true, rogue: false },
+  },
+  {
+    name: "supabase",
+    description: "Supabase - Open source Firebase alternative",
+    tags: ["database", "auth", "storage"],
+    supports: { oauth: false, genesis: false, byoc: true, rogue: true },
+  },
+  {
+    name: "obo",
+    description: "obo - Self-referential access management",
+    tags: ["internal", "self-hosted", "api"],
+    supports: { oauth: false, genesis: true, byoc: true, rogue: false },
+  },
+  {
+    name: "vercel",
+    description: "Vercel - Deploy frontend projects and serverless functions",
+    tags: ["deployment", "frontend", "nextjs", "serverless"],
+    supports: { oauth: false, genesis: false, byoc: true, rogue: false },
+  },
+  {
+    name: "slack",
+    description: "Slack - Messaging and notifications for teams",
+    tags: ["messaging", "chat", "notifications", "team"],
+    supports: { oauth: false, genesis: false, byoc: true, rogue: false },
+  },
+  {
+    name: "linear",
+    description: "Linear - Project management and issue tracking",
+    tags: ["project-management", "issues", "tracking", "agile"],
+    supports: { oauth: false, genesis: false, byoc: true, rogue: false },
+  },
+  {
+    name: "notion",
+    description: "Notion - Docs, databases, and wikis",
+    tags: ["docs", "database", "wiki", "knowledge"],
+    supports: { oauth: false, genesis: false, byoc: true, rogue: false },
+  },
+  {
+    name: "huggingface",
+    description: "Hugging Face - ML models, datasets, and AI platform",
+    tags: ["ai", "ml", "models", "datasets", "inference"],
+    supports: { oauth: true, genesis: false, byoc: true, rogue: false },
+  },
+  {
+    name: "openai",
+    description: "OpenAI - GPT models, fine-tuning, and AI API",
+    tags: ["ai", "ml", "gpt", "llm", "api"],
+    supports: { oauth: false, genesis: false, byoc: true, rogue: false },
+  },
+  {
+    name: "twitch",
+    description: "Twitch - Live streaming and chat platform",
+    tags: ["streaming", "gaming", "chat", "live"],
+    supports: { oauth: true, genesis: false, byoc: false, rogue: false },
+  },
+  {
+    name: "googlecloud",
+    description: "Google Cloud Platform - Cloud infrastructure and services",
+    tags: ["cloud", "infrastructure", "gcp", "compute", "storage", "iam"],
+    supports: { oauth: false, genesis: false, byoc: true, rogue: false },
+  },
+  {
+    name: "strava",
+    description: "Strava - Fitness tracking and social network for athletes",
+    tags: ["fitness", "sports", "running", "cycling", "activities"],
+    supports: { oauth: true, genesis: false, byoc: false, rogue: false },
+  },
+  {
+    name: "stripe",
+    description: "Stripe - Payments infrastructure and billing",
+    tags: ["payments", "billing", "finance", "api"],
+    supports: { oauth: true, genesis: false, byoc: true, rogue: false },
+  },
+  {
+    name: "discord",
+    description: "Discord - Chat, communities, and gaming platform",
+    tags: ["chat", "gaming", "community", "bot"],
+    supports: { oauth: true, genesis: false, byoc: true, rogue: false },
+  },
+];
+
 async function initializeDefaultData() {
   const existingTargets = await db.select().from(schema.targets);
+  const existingTargetNames = new Set(existingTargets.map((t) => t.name));
 
-  if (existingTargets.length === 0) {
-    await db.insert(schema.targets).values({
-      id: genId(),
-      name: "github",
-      description: "GitHub - Git hosting and code collaboration",
-      tags: ["git", "hosting", "code", "repos"],
-      supports: { oauth: true, genesis: true, byoc: true, rogue: false },
-    }).onConflictDoNothing();
-
-    await db.insert(schema.targets).values({
-      id: genId(),
-      name: "supabase",
-      description: "Supabase - Open source Firebase alternative",
-      tags: ["database", "auth", "storage"],
-      supports: { oauth: false, genesis: false, byoc: true, rogue: true },
-    }).onConflictDoNothing();
-
-    await db.insert(schema.targets).values({
-      id: genId(),
-      name: "obo",
-      description: "obo - Self-referential access management",
-      tags: ["internal", "self-hosted", "api"],
-      supports: { oauth: false, genesis: true, byoc: true, rogue: false },
-    }).onConflictDoNothing();
-
-    await db.insert(schema.targets).values({
-      id: genId(),
-      name: "vercel",
-      description: "Vercel - Deploy frontend projects and serverless functions",
-      tags: ["deployment", "frontend", "nextjs", "serverless"],
-      supports: { oauth: false, genesis: false, byoc: true, rogue: false },
-    }).onConflictDoNothing();
-
-    await db.insert(schema.targets).values({
-      id: genId(),
-      name: "slack",
-      description: "Slack - Messaging and notifications for teams",
-      tags: ["messaging", "chat", "notifications", "team"],
-      supports: { oauth: false, genesis: false, byoc: true, rogue: false },
-    }).onConflictDoNothing();
-
-    await db.insert(schema.targets).values({
-      id: genId(),
-      name: "linear",
-      description: "Linear - Project management and issue tracking",
-      tags: ["project-management", "issues", "tracking", "agile"],
-      supports: { oauth: false, genesis: false, byoc: true, rogue: false },
-    }).onConflictDoNothing();
-
-    await db.insert(schema.targets).values({
-      id: genId(),
-      name: "notion",
-      description: "Notion - Docs, databases, and wikis",
-      tags: ["docs", "database", "wiki", "knowledge"],
-      supports: { oauth: false, genesis: false, byoc: true, rogue: false },
-    }).onConflictDoNothing();
-
-    console.log("Initialized default targets");
+  // Insert any missing providers
+  for (const provider of allProviders) {
+    if (!existingTargetNames.has(provider.name)) {
+      await db.insert(schema.targets).values({
+        id: genId(),
+        ...provider,
+      });
+      console.log(`Added missing provider: ${provider.name}`);
+    }
   }
 
   const existingPolicies = await db.select().from(schema.policies);
+  const existingPolicyNames = new Set(existingPolicies.map((p) => p.name));
 
-  if (existingPolicies.length === 0) {
-    await db.insert(schema.policies).values([
-      {
-        id: genId(),
-        name: "GitHub Default",
-        description: "Default policy for GitHub access",
-        principals: ["*"],
-        actors: ["*"],
-        targets: ["github"],
-        autoApprove: ["repos:read", "user:read", "user:email"],
-        manualApprove: ["repos:write", "repos:delete", "admin:org"],
-        deny: [],
-        maxTtl: 86400,
-      },
-      {
-        id: genId(),
-        name: "Supabase Default",
-        description: "Default policy for Supabase access",
-        principals: ["*"],
-        actors: ["*"],
-        targets: ["supabase"],
-        autoApprove: ["projects:read", "database:read", "functions:read"],
-        manualApprove: ["projects:write", "database:write", "functions:write"],
-        deny: [],
-        maxTtl: 3600,
-      },
-      {
-        id: genId(),
-        name: "OBO Default",
-        description: "Default policy for OBO self-referential access",
-        principals: ["*"],
-        actors: ["*"],
-        targets: ["obo"],
-        autoApprove: ["slips:list", "slips:create", "slips:revoke", "policies:read", "dashboard:read"],
-        manualApprove: ["policies:write"],
-        deny: [],
-        maxTtl: 3600,
-      },
-      {
-        id: genId(),
-        name: "Vercel Default",
-        description: "Default policy for Vercel access",
-        principals: ["*"],
-        actors: ["*"],
-        targets: ["vercel"],
-        autoApprove: ["projects:read", "deployments:read"],
-        manualApprove: ["projects:write", "deployments:write", "deployment:trigger"],
-        deny: [],
-        maxTtl: 3600,
-      },
-      {
-        id: genId(),
-        name: "Slack Default",
-        description: "Default policy for Slack access",
-        principals: ["*"],
-        actors: ["*"],
-        targets: ["slack"],
-        autoApprove: ["chat:write", "channels:read", "users:read"],
-        manualApprove: ["channels:write", "files:write", "users:write"],
-        deny: [],
-        maxTtl: 3600,
-      },
-      {
-        id: genId(),
-        name: "Linear Default",
-        description: "Default policy for Linear access",
-        principals: ["*"],
-        actors: ["*"],
-        targets: ["linear"],
-        autoApprove: ["issues:read", "teams:read", "projects:read"],
-        manualApprove: ["issues:write", "issues:create", "projects:write"],
-        deny: [],
-        maxTtl: 3600,
-      },
-      {
-        id: genId(),
-        name: "Notion Default",
-        description: "Default policy for Notion access",
-        principals: ["*"],
-        actors: ["*"],
-        targets: ["notion"],
-        autoApprove: ["pages:read", "databases:read", "search"],
-        manualApprove: ["pages:write", "databases:write", "blocks:write"],
-        deny: [],
-        maxTtl: 3600,
-      },
-    ]).onConflictDoNothing();
+  // All available policies with their configurations
+  const allPolicies = [
+    {
+      name: "GitHub Default",
+      description: "Default policy for GitHub access",
+      principals: ["*"],
+      actors: ["*"],
+      targets: ["github"],
+      autoApprove: ["repos:read", "user:read", "user:email"],
+      manualApprove: ["repos:write", "repos:delete", "admin:org"],
+      deny: [],
+      maxTtl: 86400,
+    },
+    {
+      name: "Supabase Default",
+      description: "Default policy for Supabase access",
+      principals: ["*"],
+      actors: ["*"],
+      targets: ["supabase"],
+      autoApprove: ["projects:read", "database:read", "functions:read"],
+      manualApprove: ["projects:write", "database:write", "functions:write"],
+      deny: [],
+      maxTtl: 3600,
+    },
+    {
+      name: "OBO Default",
+      description: "Default policy for OBO self-referential access",
+      principals: ["*"],
+      actors: ["*"],
+      targets: ["obo"],
+      autoApprove: ["slips:list", "slips:create", "slips:revoke", "policies:read", "dashboard:read"],
+      manualApprove: ["policies:write"],
+      deny: [],
+      maxTtl: 3600,
+    },
+    {
+      name: "Vercel Default",
+      description: "Default policy for Vercel access",
+      principals: ["*"],
+      actors: ["*"],
+      targets: ["vercel"],
+      autoApprove: ["projects:read", "deployments:read"],
+      manualApprove: ["projects:write", "deployments:write", "deployment:trigger"],
+      deny: [],
+      maxTtl: 3600,
+    },
+    {
+      name: "Slack Default",
+      description: "Default policy for Slack access",
+      principals: ["*"],
+      actors: ["*"],
+      targets: ["slack"],
+      autoApprove: ["chat:write", "channels:read", "users:read"],
+      manualApprove: ["channels:write", "files:write", "users:write"],
+      deny: [],
+      maxTtl: 3600,
+    },
+    {
+      name: "Linear Default",
+      description: "Default policy for Linear access",
+      principals: ["*"],
+      actors: ["*"],
+      targets: ["linear"],
+      autoApprove: ["issues:read", "teams:read", "projects:read"],
+      manualApprove: ["issues:write", "issues:create", "projects:write"],
+      deny: [],
+      maxTtl: 3600,
+    },
+    {
+      name: "Notion Default",
+      description: "Default policy for Notion access",
+      principals: ["*"],
+      actors: ["*"],
+      targets: ["notion"],
+      autoApprove: ["pages:read", "databases:read", "search"],
+      manualApprove: ["pages:write", "databases:write", "blocks:write"],
+      deny: [],
+      maxTtl: 3600,
+    },
+    {
+      name: "Hugging Face Default",
+      description: "Default policy for Hugging Face access",
+      principals: ["*"],
+      actors: ["*"],
+      targets: ["huggingface"],
+      autoApprove: ["repos:read", "models:read", "datasets:read"],
+      manualApprove: ["repos:write", "models:write", "inference:manage"],
+      deny: [],
+      maxTtl: 3600,
+    },
+    {
+      name: "OpenAI Default",
+      description: "Default policy for OpenAI access",
+      principals: ["*"],
+      actors: ["*"],
+      targets: ["openai"],
+      autoApprove: ["models:read", "chat:create", "embeddings:create"],
+      manualApprove: ["assistants:write", "fine-tunes:write"],
+      deny: [],
+      maxTtl: 3600,
+    },
+    {
+      name: "Twitch Default",
+      description: "Default policy for Twitch access",
+      principals: ["*"],
+      actors: ["*"],
+      targets: ["twitch"],
+      autoApprove: ["channel:read", "chat:read"],
+      manualApprove: ["channel:write", "chat:write", "moderator:write"],
+      deny: [],
+      maxTtl: 3600,
+    },
+    {
+      name: "Google Cloud Default",
+      description: "Default policy for Google Cloud access",
+      principals: ["*"],
+      actors: ["*"],
+      targets: ["googlecloud"],
+      autoApprove: ["storage:read", "logging:read", "monitoring:read"],
+      manualApprove: ["storage:write", "compute:write", "bigquery:write"],
+      deny: [],
+      maxTtl: 7200,
+    },
+    {
+      name: "Strava Default",
+      description: "Default policy for Strava access",
+      principals: ["*"],
+      actors: ["*"],
+      targets: ["strava"],
+      autoApprove: ["activities:read", "profile:read"],
+      manualApprove: ["activities:write", "profile:write"],
+      deny: [],
+      maxTtl: 3600,
+    },
+    {
+      name: "Stripe Default",
+      description: "Default policy for Stripe access",
+      principals: ["*"],
+      actors: ["*"],
+      targets: ["stripe"],
+      autoApprove: ["charges:read", "customers:read", "products:read"],
+      manualApprove: ["charges:write", "customers:write", "refunds:write"],
+      deny: [],
+      maxTtl: 3600,
+    },
+    {
+      name: "Discord Default",
+      description: "Default policy for Discord access",
+      principals: ["*"],
+      actors: ["*"],
+      targets: ["discord"],
+      autoApprove: ["identify", "guilds:read"],
+      manualApprove: ["guilds:join", "messages:write", "guilds:write"],
+      deny: [],
+      maxTtl: 3600,
+    },
+  ];
 
-    console.log("Initialized default policies");
+  // Insert any missing policies
+  for (const policy of allPolicies) {
+    if (!existingPolicyNames.has(policy.name)) {
+      await db.insert(schema.policies).values({
+        id: genId(),
+        ...policy,
+      });
+      console.log(`Added missing policy: ${policy.name}`);
+    }
   }
 
   const existingActors = await db.select().from(schema.actors);
@@ -210,6 +340,31 @@ slipService.registerProvider(VercelProvider);
 slipService.registerProvider(SlackProvider);
 slipService.registerProvider(LinearProvider);
 slipService.registerProvider(NotionProvider);
+slipService.registerProvider(HuggingFaceProvider);
+slipService.registerProvider(OpenAIProvider);
+slipService.registerProvider(TwitchProvider);
+slipService.registerProvider(GoogleCloudProvider);
+slipService.registerProvider(StravaProvider);
+slipService.registerProvider(StripeProvider);
+slipService.registerProvider(DiscordProvider);
+
+// Load policies from database into SlipService
+async function loadPoliciesFromDatabase() {
+  const policies = await db.select().from(schema.policies);
+  for (const policy of policies) {
+    slipService.registerPolicy({
+      id: policy.id,
+      principals: policy.principals,
+      actors: policy.actors,
+      targets: policy.targets,
+      auto_approve: policy.autoApprove,
+      manual_approve: policy.manualApprove,
+      deny: policy.deny,
+      max_ttl: policy.maxTtl,
+    });
+  }
+  console.log(`Loaded ${policies.length} policies from database`);
+}
 
 interface Context {
   db: typeof db;
@@ -272,6 +427,16 @@ const slipRouter = t.router({
         ttl: input.ttl,
         reason: input.reason,
       });
+
+      console.log('[API] slipService.requestSlip result keys:', Object.keys(result));
+      console.log('[API] result.slip.keys:', Object.keys(result.slip));
+      console.log('[API] Has deviceCodeInfo?', 'deviceCodeInfo' in result);
+
+      if ((result as any).deviceCodeInfo) {
+        console.log('[API] deviceCodeInfo found!');
+      } else {
+        console.log('[API] No deviceCodeInfo. Full result:', JSON.stringify(result, null, 2));
+      }
 
       const [slip] = await ctx.db.insert(schema.slips).values({
         id: result.slip.id,
@@ -374,9 +539,12 @@ Requested scopes: ${githubScopes.join(", ")}
 After authorizing, call complete_oauth_flow with slip ID: ${slip.id}`;
       }
 
-      // For providers that do return deviceCodeInfo (future)
+      // For providers that do return deviceCodeInfo (Discord, etc.)
       if ((result as any).deviceCodeInfo) {
         const dc = (result as any).deviceCodeInfo;
+        console.log('[API] deviceCodeInfo found for target:', target[0].name);
+        console.log('[API] deviceCodeInfo.deviceCode:', dc.deviceCode?.substring(0, 20) + '...');
+        console.log('[API] slip.id:', slip.id);
         await ctx.db.insert(schema.pendingOAuthFlows).values({
           slipId: slip.id,
           deviceCode: dc.deviceCode,
@@ -386,6 +554,10 @@ After authorizing, call complete_oauth_flow with slip ID: ${slip.id}`;
           interval: dc.interval,
           expiresAt: new Date(dc.expiresInAt),
         }).onConflictDoNothing();
+        console.log('[API] Pending OAuth flow stored successfully');
+      } else {
+        console.log('[API] No deviceCodeInfo in result. Available keys:', Object.keys(result));
+        console.log('[API] result.slip:', { ...result.slip });
       }
 
       await ctx.db.insert(schema.auditLog).values({
@@ -580,6 +752,19 @@ After authorizing, call complete_oauth_flow with slip ID: ${slip.id}`;
       }
 
       throw new Error("Authorization timed out. Please try again.");
+    }),
+
+  cleanup: t.procedure
+    .mutation(async ({ ctx }) => {
+      // Delete all slips that are not active (revoked, expired, etc.)
+      const result = await ctx.db.delete(schema.slips)
+        .where(ne(schema.slips.status, "active"));
+
+      // Also delete orphaned tokens
+      await ctx.db.delete(schema.tokens)
+        .where(sql`slip_id NOT IN (SELECT id FROM slips)`);
+
+      return { success: true, deleted: Number(result.rowCount || 0) };
     }),
 
   revoke: t.procedure
@@ -791,14 +976,36 @@ app.get("/", (c) => c.json({
   endpoints: {
     health: "/health",
     trpc: "/trpc",
+    callback: "/callback/:service",
   },
 }));
+
+// Universal OAuth PKCE callback handler
+app.get("/callback/:service", async (c) => {
+  const service = c.req.param("service") || "";
+  const query = {
+    code: c.req.query("code"),
+    state: c.req.query("state"),
+    error: c.req.query("error"),
+    error_description: c.req.query("error_description"),
+  };
+
+  // Build origin URL for callback
+  const proto = c.req.header("x-forwarded-proto") || "http";
+  const host = c.req.header("host") || "localhost:3001";
+  const originUrl = `${proto}://${host}`;
+
+  const result = await handleCallback(service, query, originUrl);
+
+  return c.html(generateCallbackHtml(result));
+});
 
 const port = parseInt(process.env.PORT || "3001");
 
 (async () => {
   await initializeDefaultData();
-  
+  await loadPoliciesFromDatabase();
+
   console.log(`OBO API server starting on port ${port}`);
 
   serve({

@@ -35,6 +35,46 @@
     "./notion": {
       "types": "./dist/notion/index.d.ts",
       "import": "./dist/notion/index.js"
+    },
+    "./huggingface": {
+      "types": "./dist/huggingface/index.d.ts",
+      "import": "./dist/huggingface/index.js"
+    },
+    "./openai": {
+      "types": "./dist/openai/index.d.ts",
+      "import": "./dist/openai/index.js"
+    },
+    "./twitch": {
+      "types": "./dist/twitch/index.d.ts",
+      "import": "./dist/twitch/index.js"
+    },
+    "./googlecloud": {
+      "types": "./dist/googlecloud/index.d.ts",
+      "import": "./dist/googlecloud/index.js"
+    },
+    "./strava": {
+      "types": "./dist/strava/index.d.ts",
+      "import": "./dist/strava/index.js"
+    },
+    "./stripe": {
+      "types": "./dist/stripe/index.d.ts",
+      "import": "./dist/stripe/index.js"
+    },
+    "./shared": {
+      "types": "./dist/shared/index.d.ts",
+      "import": "./dist/shared/index.js"
+    },
+    "./shared/pkce": {
+      "types": "./dist/shared/pkce.d.ts",
+      "import": "./dist/shared/pkce.js"
+    },
+    "./shared/oauth-device": {
+      "types": "./dist/shared/oauth-device.d.ts",
+      "import": "./dist/shared/oauth-device.js"
+    },
+    "./discord": {
+      "types": "./dist/discord/index.d.ts",
+      "import": "./dist/discord/index.js"
     }
   },
   "files": [

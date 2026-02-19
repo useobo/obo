@@ -13,6 +13,7 @@ export default defineConfig({
     "@useobo/providers",
     "@useobo/providers/*",
     "@obo/db",
+    "@trpc/server",
     "hono",
     "zod",
     "drizzle-orm",
