@@ -25,6 +25,13 @@ import { VercelProvider } from "@useobo/providers/vercel";
 import { SlackProvider } from "@useobo/providers/slack";
 import { LinearProvider } from "@useobo/providers/linear";
 import { NotionProvider } from "@useobo/providers/notion";
+import { HuggingFaceProvider, completeHuggingFaceOAuth } from "@useobo/providers/huggingface";
+import { OpenAIProvider } from "@useobo/providers/openai";
+import { TwitchProvider, completeTwitchOAuth } from "@useobo/providers/twitch";
+import { GoogleCloudProvider } from "@useobo/providers/googlecloud";
+import { StravaProvider, completeStravaOAuth } from "@useobo/providers/strava";
+import { StripeProvider } from "@useobo/providers/stripe";
+import { DiscordProvider } from "@useobo/providers/discord";
 
 // ---------------------------------------------------------------------
 // Slip Service Setup
@@ -39,6 +46,13 @@ slipService.registerProvider(VercelProvider);
 slipService.registerProvider(SlackProvider);
 slipService.registerProvider(LinearProvider);
 slipService.registerProvider(NotionProvider);
+slipService.registerProvider(HuggingFaceProvider);
+slipService.registerProvider(OpenAIProvider);
+slipService.registerProvider(TwitchProvider);
+slipService.registerProvider(GoogleCloudProvider);
+slipService.registerProvider(StravaProvider);
+slipService.registerProvider(StripeProvider);
+slipService.registerProvider(DiscordProvider);
 
 // ---------------------------------------------------------------------
 // Tool Schemas
@@ -260,17 +274,42 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const input = CompleteOAuthSchema.parse(args);
 
         try {
-          const token = await completeOAuthFlow(input.slip_id);
+          // Get the slip to determine which provider to use
+          const slip = slipService.listSlips({}).find(s => s.id === input.slip_id);
+
+          if (!slip) {
+            throw new Error(`Slip ${input.slip_id} not found`);
+          }
+
+          let token;
+          switch (slip.target) {
+            case "github":
+              token = await completeOAuthFlow(input.slip_id);
+              break;
+            case "huggingface":
+              token = await completeHuggingFaceOAuth(input.slip_id);
+              break;
+            case "twitch":
+              token = await completeTwitchOAuth(input.slip_id);
+              break;
+            case "strava":
+              token = await completeStravaOAuth(input.slip_id);
+              break;
+            default:
+              throw new Error(`OAuth completion not supported for target: ${slip.target}`);
+          }
 
           return {
             content: [
               {
                 type: "text",
                 text: `OAuth flow completed successfully!\n\n` +
+                      `Slip ID: ${input.slip_id}\n` +
+                      `Target: ${slip.target}\n` +
                       `Token ID: ${token.id}\n` +
                       `Token Type: ${token.type}\n` +
                       `Token: ${token.secret}\n` +
-                      `\nThis token can now be used to make GitHub API requests.`,
+                      `\nThis token can now be used to make ${slip.target} API requests.`,
               },
             ],
           };
